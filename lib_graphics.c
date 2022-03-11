@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// A2650 includes
+// A2560 includes
 #include <mcp/syscalls.h>
 #include <mb/a2560_platform.h>
 #include <mb/lib_general.h>

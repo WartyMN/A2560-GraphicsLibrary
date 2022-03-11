@@ -9,7 +9,7 @@
 // C includes
 
 
-// A2650 includes
+// A2560 includes
 #include <mb/a2560_platform.h>
 #include <mb/lib_general.h>
 #include <mb/lib_text.h>
