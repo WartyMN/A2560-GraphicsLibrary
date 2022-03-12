@@ -1,10 +1,10 @@
 /*
- * lib_text_demo.c
+ * lib_graphics_demo.c
  *
- *  Created on: Mar 5, 2022
+ *  Created on: Mar 10, 2022
  *      Author: micahbly
  *
- *  Demonstrates many of the features of the text library
+ *  Demonstrates many of the features of the graphics library
  *
  */
 
@@ -15,7 +15,6 @@
 
 
 // project includes
-#include "lib_graphics.h"
 
 
 // C includes
@@ -29,6 +28,7 @@
 #include <mb/a2560_platform.h>
 #include <mb/lib_general.h>
 #include <mb/lib_text.h>
+#include <mb/lib_graphics.h>
 
 
 /*****************************************************************************/
@@ -59,10 +59,6 @@ void ShowDescription(char* the_message);
 // run all the demos
 void RunDemo(void);
 
-// simple function for testing passing a function hook for "do something to see another page of text" for the drawstringinbox stuff. 
-//! @return	returns true if the user wants to continue, or false if the user wants to stop the current action.
-boolean Test_MyGetUserResponseFunc(void);
-
 // various demos
 void Demo_Graphics_FillMemory1(void);
 void Demo_Graphics_FillMemory2(void);
@@ -83,24 +79,6 @@ void Demo_Graphics_ScreenResolution2(void);
 /*****************************************************************************/
 /*                       Private Function Definitions                        */
 /*****************************************************************************/
-
-
-// simple function for testing passing a function hook for "do something to see another page of text" for the drawstringinbox stuff. 
-//! @return	returns true if the user wants to continue, or false if the user wants to stop the current action.
-boolean Test_MyGetUserResponseFunc(void)
-{
-	unsigned char	c;
-	
-	c = getchar();
-	
-	if (c == 'q')
-	{
-		return false;
-	}
-	
-	return true;
-}
-
 
 
 // have user hit a key, then clear screens

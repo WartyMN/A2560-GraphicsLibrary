@@ -10,15 +10,15 @@ Web site: https://c256foenix.com/?v=3e8d115eb4b3
 This is a learning project for me, to build experience on the A2560. Aside from learning, the goal is to be able to build a library of functions that can be used to work with bitmaps, draw graphics primities, etc., on the screen, and to be able to query the screen about what is at a particular location. If completed (big if), it would occupy approximately the same space as AmigaOS's Intuition functions, or Mac OS 1-9's QuickDraw functions (but with much less ambition and scope!!!).  
 
 ## Status
-1% complete. Next phase: Start writing code. 
+1% complete. Next phase: Start writing code.  
 I do not have any hardware yet. I'm doing all development against the f68 emulator, but that itself is also a tool in development. 
 
 ## Why you might want this:
-If you have, or are considering acquiring an A2560K or GenX (68040 OR 486 + 65816), and want a simple library to work with bitmap graphics in your C programs. 
+If you have, or are considering acquiring an A2560K or GenX (68040 OR 486 + 65816), and want a simple library to work with bitmap graphics in your C programs.  
 Note: **NO ONE SHOULD USE THIS, OR EVEN LOOK IN ITS DIRECTION!** (until I get some real hardware and can complete the job).
 
 ## How to use it
-The A2560 kernel/OS doesn't support dynamically linked libraries yet, so for now, it is only available as a static library. In the "for_vbcc" folder, you will file a header file, and the library. Add these to your $VBCC "targets/a2560-elf" folder. 
+The A2560 kernel/OS doesn't support dynamically linked libraries yet, so for now, it is only available as a static library. In the "for_vbcc" folder, you will file a header file, and the library. Add these to your $VBCC "targets/a2560-elf" folder.  
 `$VBCC/targets/a2560-elf/include/mb/lib_graphics.h`  
 `$VBCC/targets/a2560-elf/lib/a2560_graphics.lib`  
 
