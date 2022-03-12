@@ -62,15 +62,17 @@
 /*                            Macro Definitions                              */
 /*****************************************************************************/
 
-#define PARAM_DRAW_NE	true	//!< for Graphics_DrawCircleQuadrants, do draw NE quadrant
-#define PARAM_DRAW_SE	true	//!< for Graphics_DrawCircleQuadrants, do draw SE quadrant
-#define PARAM_DRAW_SW	true	//!< for Graphics_DrawCircleQuadrants, do draw SW quadrant
-#define PARAM_DRAW_NW	true	//!< for Graphics_DrawCircleQuadrants, do draw NW quadrant
-#define PARAM_SKIP_NE	false	//!< for Graphics_DrawCircleQuadrants, do NOT draw NE quadrant
-#define PARAM_SKIP_SE	false	//!< for Graphics_DrawCircleQuadrants, do NOT draw SE quadrant
-#define PARAM_SKIP_SW	false	//!< for Graphics_DrawCircleQuadrants, do NOT draw SW quadrant
-#define PARAM_SKIP_NW	false	//!< for Graphics_DrawCircleQuadrants, do NOT draw NW quadrant
+#define PARAM_DRAW_NE		true	//!< for Graphics_DrawCircleQuadrants, do draw NE quadrant
+#define PARAM_DRAW_SE		true	//!< for Graphics_DrawCircleQuadrants, do draw SE quadrant
+#define PARAM_DRAW_SW		true	//!< for Graphics_DrawCircleQuadrants, do draw SW quadrant
+#define PARAM_DRAW_NW		true	//!< for Graphics_DrawCircleQuadrants, do draw NW quadrant
+#define PARAM_SKIP_NE		false	//!< for Graphics_DrawCircleQuadrants, do NOT draw NE quadrant
+#define PARAM_SKIP_SE		false	//!< for Graphics_DrawCircleQuadrants, do NOT draw SE quadrant
+#define PARAM_SKIP_SW		false	//!< for Graphics_DrawCircleQuadrants, do NOT draw SW quadrant
+#define PARAM_SKIP_NW		false	//!< for Graphics_DrawCircleQuadrants, do NOT draw NW quadrant
 
+#define PARAM_DO_FILL		true	//!< for various graphic routines
+#define PARAM_DO_NOT_FILL	false	//!< for various graphic routines
 
 /*****************************************************************************/
 /*                               Enumerations                                */
@@ -120,12 +122,12 @@ boolean Graphics_BlitBitMap(Screen* the_screen, Bitmap* src_bm, int src_x, int s
 // Fill graphics memory with specified value
 // calling function must validate the screen ID before passing!
 //! @return	returns false on any error/invalid input.
-boolean Graphics_FillMemory(Screen* the_screen, unsigned char the_value);
+boolean Graphics_FillMemory(Screen* the_screen, unsigned char the_color);
 
 // Fill pixel values for a specific box area
 // calling function must validate screen id, coords!
 //! @return	returns false on any error/invalid input.
-boolean Graphics_FillBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, unsigned char the_value);
+boolean Graphics_FillBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, unsigned char the_color);
 
 
 
@@ -140,7 +142,7 @@ boolean Graphics_FillBox(Screen* the_screen, signed int x, signed int y, signed 
 
 
 // Set pixel at a specified x, y coord
-boolean Graphics_SetPixelAtXY(Screen* the_screen, signed int x, signed int y, unsigned char the_value);
+boolean Graphics_SetPixelAtXY(Screen* the_screen, signed int x, signed int y, unsigned char the_color);
 
 
 
@@ -158,41 +160,43 @@ unsigned char Graphics_GetPixelAtXY(Screen* the_screen, signed int x, signed int
 //! Draws a line between 2 passed coordinates.
 //! Use for any line that is not perfectly vertical or perfectly horizontal
 //! Based on http://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C
-boolean Graphics_DrawLine(Screen* the_screen, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_value);
+boolean Graphics_DrawLine(Screen* the_screen, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_color);
 
 //! Draws a horizontal line from specified coords, for n pixels, using the specified pixel value
-//! @param	the_value: a 1-byte index to the current LUT
+//! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawHLine(Screen* the_screen, signed int x, signed int y, signed int the_line_len, unsigned char the_value);
+boolean Graphics_DrawHLine(Screen* the_screen, signed int x, signed int y, signed int the_line_len, unsigned char the_color);
 
 //! Draws a vertical line from specified coords, for n pixels
-//! @param	the_value: a 1-byte index to the current LUT
+//! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawVLine(Screen* the_screen, signed int x, signed int y, signed int the_line_len, unsigned char the_value);
+boolean Graphics_DrawVLine(Screen* the_screen, signed int x, signed int y, signed int the_line_len, unsigned char the_color);
 
 //! Draws a rectangle based on 2 sets of coords, using the specified LUT value
-//! @param	the_value: a 1-byte index to the current LUT
+//! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawBoxCoords(Screen* the_screen, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_value);
+boolean Graphics_DrawBoxCoords(Screen* the_screen, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_color);
 
-//! Draws a rectangle based on start coords and width/height, using the specified LUT value
+//! Draws a rectangle based on start coords and width/height, and optionally fills the rectangle.
 //! @param	width: width, in pixels, of the rectangle to be drawn
 //! @param	height: height, in pixels, of the rectangle to be drawn
-//! @param	the_value: a 1-byte index to the current LUT
+//! @param	the_color: a 1-byte index to the current LUT
+//! @param	do_fill: If true, the box will be filled with the provided color. If false, the box will only draw the outline.
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, unsigned char the_value);
+boolean Graphics_DrawBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, unsigned char the_color, boolean do_fill);
 
-//! Draws a rounded rectangle based on start coords and width/height, using the specified LUT value
+//! Draws a rounded rectangle with the specified size and radius, and optionally fills the rectangle.
 //! @param	width: width, in pixels, of the rectangle to be drawn
 //! @param	height: height, in pixels, of the rectangle to be drawn
-//! @param	radius: radius, in pixels, of the arc to be applied to the rectangle's corners. Maximum allowed is 20.
-//! @param	the_value: a 1-byte index to the current LUT
+//! @param	radius: radius, in pixels, of the arc to be applied to the rectangle's corners. Minimum 3, maximum 20.
+//! @param	the_color: a 1-byte index to the current color LUT
+//! @param	do_fill: If true, the box will be filled with the provided color. If false, the box will only draw the outline.
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawRoundBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, signed int radius, unsigned char the_value);
+boolean Graphics_DrawRoundBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, signed int radius, unsigned char the_color, boolean do_fill);
 
 //! Draw a circle
 //! Based on http://rosettacode.org/wiki/Bitmap/Midpoint_circle_algorithm#C
-boolean Graphics_DrawCircle(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_value);
+boolean Graphics_DrawCircle(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_color);
 
 
 

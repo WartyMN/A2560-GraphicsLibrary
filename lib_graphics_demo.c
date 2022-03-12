@@ -66,6 +66,7 @@ void Demo_Graphics_FillBox1(void);
 void Demo_Graphics_FillBox2(void);
 void Demo_Graphics_FillBox3(void);
 void Demo_Graphics_SetPixelAtXY(void);
+void Demo_Graphics_GetPixelAtXY(void);
 void Demo_Graphics_DrawHLine1(void);
 void Demo_Graphics_DrawLine(void);
 void Demo_Graphics_DrawBox(void);
@@ -89,9 +90,9 @@ void WaitForUser(void)
 	
 	getchar();
 	
-	Graphics_FillMemory(&global_screen[ID_CHANNEL_B], 0x0f);
+	Graphics_FillMemory(&global_screen[ID_CHANNEL_B], 0xbb);
 	Text_FillCharMem(&global_screen[ID_CHANNEL_B], ' ');
-	//Text_FillAttrMem(&global_screen[ID_CHANNEL_B], 159);
+	Text_FillAttrMem(&global_screen[ID_CHANNEL_B], 0);
 }
 
 // Draw fancy box on the B screen and display demo description
@@ -134,8 +135,8 @@ void Demo_Graphics_FillBox1(void)
 	int	width = global_screen[ID_CHANNEL_B].width_ - x - 30;
 	int height = global_screen[ID_CHANNEL_B].height_ - y - 100;
 	
-	ShowDescription("Graphics_FillBox -> fill a square on screen with 0x00");	
-	Graphics_FillBox(&global_screen[ID_CHANNEL_B], x, y, width, height, 0x00);
+	ShowDescription("Graphics_FillBox -> fill a square on screen with 0xff");	
+	Graphics_FillBox(&global_screen[ID_CHANNEL_B], x, y, width, height, 0xff);
 	WaitForUser();
 }
 
@@ -176,6 +177,35 @@ void Demo_Graphics_SetPixelAtXY(void)
  	for (i = 0; i < 254; i++)
  	{
 	 	Graphics_SetPixelAtXY(&global_screen[ID_CHANNEL_B], *(junk_value++) + i, *(junk_value++) + i, i);
+ 	}
+	WaitForUser();
+}
+
+
+void Demo_Graphics_GetPixelAtXY(void)
+{
+	int				x = 1;
+	int				y = 8*8;
+	int				width = 60;
+	int				height = 200;
+	int				color = 0x20;
+	unsigned char	i;
+	int				detected_color;
+	char			temp_buff[25];
+	int				text_y = (y+height)/8 + 1; // put it under the colored squares
+	
+	ShowDescription("Graphics_GetPixelAtXY -> Get the color value of a specified pixel");	
+ 	
+ 	for (i = 0; i < 10; i++)
+ 	{
+		Graphics_FillBox(&global_screen[ID_CHANNEL_B], x, y, width, height, color);
+	 	detected_color = Graphics_GetPixelAtXY(&global_screen[ID_CHANNEL_B], x, y);
+	 	sprintf(temp_buff, "Set:%x", color);
+	 	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], (x+1)/8, text_y, (char*)temp_buff, FG_COLOR_YELLOW, BG_COLOR_BLACK);
+	 	sprintf(temp_buff, "Got:%x", detected_color);
+	 	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], (x+1)/8, text_y+1, (char*)temp_buff, FG_COLOR_YELLOW, BG_COLOR_BLACK);
+		color += 25;
+		x += width;
  	}
 	WaitForUser();
 }
@@ -236,12 +266,19 @@ void Demo_Graphics_DrawBox(void)
 	int	width = global_screen[ID_CHANNEL_B].width_ - x - 60;
 	int height = 300;
 
-	ShowDescription("Graphics_DrawBox -> Draw an unfilled box using start coordinates + width and height.");	
+	ShowDescription("Graphics_DrawBox -> Draw a filled or unfilled box. Supply start coordinates, width, height, color, and fill choice.");	
 
-	if (Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x, y, width, height, 0xff) == false)
-	{
-		LOG_ERR(("%s %d: Graphics_DrawBox failed with x=%i, y=%i, width=%i, height=%i", __func__, __LINE__, x, y, width, height));
-	}
+	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x, y, width, height, 0xff, PARAM_DO_FILL);
+	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x, y, width, height, 0x55, PARAM_DO_NOT_FILL);
+	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x + 25, y + 25, width, height, 0x33, PARAM_DO_NOT_FILL);
+	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x + 50, y + 50, width, height, 0x77, PARAM_DO_NOT_FILL);
+
+	x = 0;
+	width = 10;
+	height = 10;
+	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x, y, width, height, 0xff, PARAM_DO_FILL);
+	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x, y, width, height, 0x55, PARAM_DO_NOT_FILL);
+	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x+11, y, width, height, 0xff, PARAM_DO_FILL);
 	
 	WaitForUser();
 }
@@ -270,16 +307,39 @@ void Demo_Graphics_DrawRoundBox(void)
 	int		radius = 8;
 	int		i;
 	int		color = 0x20;
+	int		line_color = 0xff;
 	int		xleft = 560;
 	
-	ShowDescription("Demo_Graphics_DrawRoundBox -> Draw an unfilled rect with rounded corners. Specify start coords, width, height, and corner radius.");	
+	ShowDescription("Demo_Graphics_DrawRoundBox -> Draw an unfilled rect with rounded corners. Specify start coords, width, height, corner radius, color, and fill/no-fill.");	
 
 	for (i = 0; i <= 20; i++)
 	{
-		Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], x + color, y + color, width + i*2, height + i*2, i, color);
-		Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], xleft - color, y + color, width*2 + i*2, height*2 + i*2, 20 - i, color);
+		Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], x + color, y + color, width + i*2, height + i*2, i, color, PARAM_DO_NOT_FILL);
+		Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], xleft - color, y + color, width*2 + i*2, height*2 + i*2, 20 - i, color, PARAM_DO_FILL);
+		Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], xleft - color, y + color, width*2 + i*2, height*2 + i*2, 20 - i, line_color, PARAM_DO_NOT_FILL);
 		color += 7;
 	}
+
+	// one filled one - SLOW - dangerous with small stack
+	x = 80;
+	y = 50;
+	width = 80;
+	height = 16;
+	radius = 5;
+	color = 0xFF;
+// 	Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], x, y, width, height, radius, color);
+// 	Graphics_FillBox(&global_screen[ID_CHANNEL_B], x + radius, y + radius, width - radius*2, height-radius*2, color);
+// 	Graphics_Fill(&global_screen[ID_CHANNEL_B], x + radius, y + 1, color);
+// 	Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], x, y, width, height, radius, 0x01);
+// 	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], (x)/8-2, y/8-1, (char*)"Cancel", FG_COLOR_BLACK, BG_COLOR_BLACK);
+// 	getchar();
+	
+	// faster fill by making rect fills and then just flood filling the corners
+	y = 250;
+	Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], x, y, width, height, radius, color, PARAM_DO_FILL);
+	Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], x, y, width, height, radius, 0x01, PARAM_DO_NOT_FILL);
+	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], (x)/8-2, y/8-1, (char*)"Cancel", FG_COLOR_BLACK, BG_COLOR_BLACK);
+
 
 	
 	WaitForUser();
@@ -357,10 +417,10 @@ void Demo_Graphics_Blit1(void)
 // 	Graphics_BlitBitMap(&global_screen[ID_CHANNEL_B], &src_bm, x1 - 100, y1 - 100, &dst_bm, 400, 300, 100, 100);
 	
 	// do a 'dragon' effect
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], 550, 350, 20, 20, 0xff);
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], 550, 350, 30, 30, 0xcc);
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], 550, 350, 40, 40, 0xbb);
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], 550, 350, 50, 50, 0x99);
+	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], 550, 350, 20, 20, 0xff, PARAM_DO_FILL);
+	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], 550, 350, 30, 30, 0xcc, PARAM_DO_FILL);
+	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], 550, 350, 40, 40, 0xbb, PARAM_DO_FILL);
+	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], 550, 350, 50, 50, 0x99, PARAM_DO_FILL);
 	
 	for (i = 0; i < 25; i++)
 	{
@@ -433,36 +493,38 @@ void Demo_Graphics_ScreenResolution2(void)
 
 void RunDemo(void)
 {
-	Text_FillCharMem(&global_screen[ID_CHANNEL_B], ' ');
-	Text_FillAttrMem(&global_screen[ID_CHANNEL_B], 160);
+// 	Text_FillCharMem(&global_screen[ID_CHANNEL_B], ' ');
+// 	Text_FillAttrMem(&global_screen[ID_CHANNEL_B], 160);
 
 	ShowDescription("Welcome to the A2560 Graphics Library Demo!");	
 	WaitForUser();
 	
-	Demo_Graphics_FillMemory1();
-	Demo_Graphics_FillMemory2();
-	
+// 	Demo_Graphics_FillMemory1();
+// 	Demo_Graphics_FillMemory2();
+// 	
 	Demo_Graphics_FillBox1();
 	Demo_Graphics_FillBox2();
 	Demo_Graphics_FillBox3();
+// 
+// 	Demo_Graphics_SetPixelAtXY();
+// 
+ 	Demo_Graphics_GetPixelAtXY();
 
-	Demo_Graphics_SetPixelAtXY();
-
-	Demo_Graphics_DrawHLine1();
-	
-	Demo_Graphics_DrawLine();
-	
+// 	Demo_Graphics_DrawHLine1();
+// 	
+// 	Demo_Graphics_DrawLine();
+// 	
 	Demo_Graphics_DrawBox();
-	Demo_Graphics_DrawBoxCoords();
+// 	Demo_Graphics_DrawBoxCoords();
 
 	Demo_Graphics_DrawRoundBox();
 	
-	Demo_Graphics_DrawCircle();
-	
-	Demo_Graphics_Blit1();
-	
-	Demo_Graphics_ScreenResolution1();
-	Demo_Graphics_ScreenResolution2();
+// 	Demo_Graphics_DrawCircle();
+// 	
+// 	Demo_Graphics_Blit1();
+// 	
+// 	Demo_Graphics_ScreenResolution1();
+// 	Demo_Graphics_ScreenResolution2();
 	
 }
 

@@ -65,7 +65,10 @@ char* Graphics_GetMemLocForXY(Screen* the_screen, signed int x, signed int y);
 //! Draw 1 to 4 quadrants of a circle
 //! Only the specified quadrants will be drawn. This makes it possible to use this to make round rects, by only passing 1 quadrant.
 //! Based on http://rosettacode.org/wiki/Bitmap/Midpoint_circle_algorithm#C
-boolean Graphics_DrawCircleQuadrants(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_value, boolean ne, boolean se, boolean sw, boolean nw);
+boolean Graphics_DrawCircleQuadrants(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_color, boolean ne, boolean se, boolean sw, boolean nw);
+
+//! Perform a flood fill starting at the coordinate passed. 
+boolean Graphics_Fill(Screen* the_screen, signed int x, signed int y, unsigned char the_color);
 
 //! \endcond
 
@@ -147,7 +150,7 @@ char* Graphics_GetMemLocForXY(Screen* the_screen, signed int x, signed int y)
 //! Only the specified quadrants will be drawn. This makes it possible to use this to make round rects, by only passing 1 quadrant.
 //! NO VALIDATION PERFORMEND ON PARAMETERS. CALLING METHOD MUST VALIDATE.
 //! Based on http://rosettacode.org/wiki/Bitmap/Midpoint_circle_algorithm#C
-boolean Graphics_DrawCircleQuadrants(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_value, boolean ne, boolean se, boolean sw, boolean nw)
+boolean Graphics_DrawCircleQuadrants(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_color, boolean ne, boolean se, boolean sw, boolean nw)
 {
     int	f;
     int	ddF_x;
@@ -163,19 +166,19 @@ boolean Graphics_DrawCircleQuadrants(Screen* the_screen, signed int x1, signed i
 
 	if (se || sw)
 	{
-		Graphics_SetPixelAtXY(the_screen, x1, y1 + radius, the_value);
+		Graphics_SetPixelAtXY(the_screen, x1, y1 + radius, the_color);
 	}
 	if (ne || nw)
 	{
-		Graphics_SetPixelAtXY(the_screen, x1, y1 - radius, the_value);
+		Graphics_SetPixelAtXY(the_screen, x1, y1 - radius, the_color);
 	}
 	if (se || ne)
 	{
-		Graphics_SetPixelAtXY(the_screen, x1 + radius, y1, the_value);
+		Graphics_SetPixelAtXY(the_screen, x1 + radius, y1, the_color);
 	}
 	if (nw || sw)
 	{
-		Graphics_SetPixelAtXY(the_screen, x1 - radius, y1, the_value);
+		Graphics_SetPixelAtXY(the_screen, x1 - radius, y1, the_color);
 	}
  
     while(x < y) 
@@ -193,32 +196,64 @@ boolean Graphics_DrawCircleQuadrants(Screen* the_screen, signed int x1, signed i
  
  		if (se)
         {
-			Graphics_SetPixelAtXY(the_screen, x1 + x, y1 + y, the_value);
-			Graphics_SetPixelAtXY(the_screen, x1 + y, y1 + x, the_value);
+			Graphics_SetPixelAtXY(the_screen, x1 + x, y1 + y, the_color);
+			Graphics_SetPixelAtXY(the_screen, x1 + y, y1 + x, the_color);
         }
  
  		if (sw)
         {
-			Graphics_SetPixelAtXY(the_screen, x1 - x, y1 + y, the_value);
-			Graphics_SetPixelAtXY(the_screen, x1 - y, y1 + x, the_value);
+			Graphics_SetPixelAtXY(the_screen, x1 - x, y1 + y, the_color);
+			Graphics_SetPixelAtXY(the_screen, x1 - y, y1 + x, the_color);
         }
  
  		if (ne)
         {
-			Graphics_SetPixelAtXY(the_screen, x1 + x, y1 - y, the_value);
-			Graphics_SetPixelAtXY(the_screen, x1 + y, y1 - x, the_value);
+			Graphics_SetPixelAtXY(the_screen, x1 + x, y1 - y, the_color);
+			Graphics_SetPixelAtXY(the_screen, x1 + y, y1 - x, the_color);
         }
  
  		if (nw)
         {
-			Graphics_SetPixelAtXY(the_screen, x1 - x, y1 - y, the_value);
-			Graphics_SetPixelAtXY(the_screen, x1 - y, y1 - x, the_value);
+			Graphics_SetPixelAtXY(the_screen, x1 - x, y1 - y, the_color);
+			Graphics_SetPixelAtXY(the_screen, x1 - y, y1 - x, the_color);
         }
     }
     
     return true;
 }
 
+
+//! Perform a flood fill starting at the coordinate passed. 
+//! WARNING: this function is recursive, and if applied to a size even 1/10th the size of the screen, it can eat the stack. Either do not use this, or control its usage to just situations you can control. Or set an enormous stack size when building your app.
+boolean Graphics_Fill(Screen* the_screen, signed int x, signed int y, unsigned char the_color)
+{   
+	int		height;
+	int		width;
+	unsigned char	color_here;
+	
+	width = the_screen->width_;
+	height = the_screen->height_;
+
+//	color_here = Graphics_GetPixelAtXY(the_screen, x, y);
+	
+// 	DEBUG_OUT(("%s %d: x=%i, y=%i, the_color=%i, value-at-spot=%i", __func__, __LINE__, x, y, the_color, color_here));
+	
+    if ( 0 <= y && y < height && 0 <= x && x < width && Graphics_GetPixelAtXY(the_screen, x, y) != the_color )
+    {
+        Graphics_SetPixelAtXY(the_screen, x, y, the_color);
+        Graphics_Fill(the_screen, x-1, y, the_color);
+        Graphics_Fill(the_screen, x+1, y, the_color);
+        Graphics_Fill(the_screen, x, y-1, the_color);
+        Graphics_Fill(the_screen, x, y+1, the_color);
+    }
+//     else
+//     {
+// 		DEBUG_OUT(("%s %d: skipping x=%i, y=%i, the_color=%i, value-at-spot=%i", __func__, __LINE__, x, y, the_color, color_here));
+//     }
+    
+    
+    return true;
+}
 
 
 //! \endcond
@@ -328,7 +363,7 @@ boolean Graphics_BlitBitMap(Screen* the_screen, Bitmap* src_bm, int src_x, int s
 // Fill graphics memory with specified value
 // calling function must validate the screen ID before passing!
 //! @return	returns false on any error/invalid input.
-boolean Graphics_FillMemory(Screen* the_screen, unsigned char the_value)
+boolean Graphics_FillMemory(Screen* the_screen, unsigned char the_color)
 {
 	char*			the_write_loc;
 	unsigned long	the_write_len;
@@ -343,7 +378,7 @@ boolean Graphics_FillMemory(Screen* the_screen, unsigned char the_value)
 
 	the_write_len = the_screen->width_ * the_screen->height_;
 	
-	memset(the_write_loc, the_value, the_write_len);
+	memset(the_write_loc, the_color, the_write_len);
 
 	return true;
 }
@@ -353,9 +388,9 @@ boolean Graphics_FillMemory(Screen* the_screen, unsigned char the_value)
 //! calling function must validate screen id, coords!
 //! @param	width: width, in pixels, of the rectangle to be filled
 //! @param	height: height, in pixels, of the rectangle to be filled
-//! @param	the_value: a 1-byte index to the current LUT
+//! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_FillBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, unsigned char the_value)
+boolean Graphics_FillBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, unsigned char the_color)
 {
 	char*			the_write_loc;
 	signed int		max_row;
@@ -366,7 +401,7 @@ boolean Graphics_FillBox(Screen* the_screen, signed int x, signed int y, signed 
 		return false;
 	}
 
-	//DEBUG_OUT(("%s %d: x=%i, y=%i, width=%i, height=%i, the_value=%i", __func__, __LINE__, x, y, width, height, the_value));
+	//DEBUG_OUT(("%s %d: x=%i, y=%i, width=%i, height=%i, the_color=%i", __func__, __LINE__, x, y, width, height, the_color));
 	
 	// set up initial loc
 	the_write_loc = Graphics_GetMemLocForXY(the_screen, x, y);
@@ -375,7 +410,7 @@ boolean Graphics_FillBox(Screen* the_screen, signed int x, signed int y, signed 
 	
 	for (; y <= max_row; y++)
 	{
-		memset(the_write_loc, the_value, width);
+		memset(the_write_loc, the_color, width);
 		the_write_loc += the_screen->width_;
 	}
 			
@@ -396,9 +431,9 @@ boolean Graphics_FillBox(Screen* the_screen, signed int x, signed int y, signed 
 
 
 //! Set a char at a specified x, y coord
-//! @param	the_value: a 1-byte index to the current LUT
+//! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_SetPixelAtXY(Screen* the_screen, signed int x, signed int y, unsigned char the_value)
+boolean Graphics_SetPixelAtXY(Screen* the_screen, signed int x, signed int y, unsigned char the_color)
 {
 	char*	the_write_loc;
 	
@@ -415,7 +450,7 @@ boolean Graphics_SetPixelAtXY(Screen* the_screen, signed int x, signed int y, un
 	}
 	
 	the_write_loc = Graphics_GetMemLocForXY(the_screen, x, y);	
- 	*the_write_loc = the_value;
+ 	*the_write_loc = the_color;
 	
 	return true;
 }
@@ -431,7 +466,7 @@ boolean Graphics_SetPixelAtXY(Screen* the_screen, signed int x, signed int y, un
 unsigned char Graphics_GetPixelAtXY(Screen* the_screen, signed int x, signed int y)
 {
 	char*			the_read_loc;
-	unsigned char	the_value;
+	unsigned char	the_color;
 	
 	if (the_screen == NULL)
 	{
@@ -446,9 +481,9 @@ unsigned char Graphics_GetPixelAtXY(Screen* the_screen, signed int x, signed int
 	}
 	
 	the_read_loc = Graphics_GetMemLocForXY(the_screen, x, y);	
- 	the_value = (unsigned char)*the_read_loc;
+ 	the_color = (unsigned char)*the_read_loc;
 	
-	return the_value;
+	return the_color;
 }
 
 
@@ -461,7 +496,7 @@ unsigned char Graphics_GetPixelAtXY(Screen* the_screen, signed int x, signed int
 //! Draws a line between 2 passed coordinates.
 //! Use for any line that is not perfectly vertical or perfectly horizontal
 //! Based on http://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C. Used in C128 Lich King. 
-boolean Graphics_DrawLine(Screen* the_screen, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_value)
+boolean Graphics_DrawLine(Screen* the_screen, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_color)
 {
 	signed int dx;
 	signed int sx;
@@ -490,7 +525,7 @@ boolean Graphics_DrawLine(Screen* the_screen, signed int x1, signed int y1, sign
 
 	for(;;)
 	{
-		Graphics_SetPixelAtXY(the_screen, x1, y1, the_value);
+		Graphics_SetPixelAtXY(the_screen, x1, y1, the_color);
 
 		if (x1==x2 && y1==y2)
 		{
@@ -516,9 +551,9 @@ boolean Graphics_DrawLine(Screen* the_screen, signed int x1, signed int y1, sign
 }
 
 //! Draws a horizontal line from specified coords, for n pixels
-//! @param	the_value: a 1-byte index to the current LUT
+//! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawHLine(Screen* the_screen, signed int x, signed int y, signed int the_line_len, unsigned char the_value)
+boolean Graphics_DrawHLine(Screen* the_screen, signed int x, signed int y, signed int the_line_len, unsigned char the_color)
 {
 	signed int		dx;
 	unsigned char	the_attribute_value;
@@ -527,7 +562,7 @@ boolean Graphics_DrawHLine(Screen* the_screen, signed int x, signed int y, signe
 	// LOGIC: 
 	//   an H line is just a box with 1 row, so we can re-use Graphics_FillBox(). These routines use memset, so are quicker than for loops. 
 
-	//DEBUG_OUT(("%s %d: x=%i, y=%i, the_line_len=%i, the_value=%i", __func__, __LINE__, x, y, the_line_len, the_value));
+	//DEBUG_OUT(("%s %d: x=%i, y=%i, the_line_len=%i, the_color=%i", __func__, __LINE__, x, y, the_line_len, the_color));
 	
 	if (the_screen == NULL)
 	{
@@ -541,20 +576,20 @@ boolean Graphics_DrawHLine(Screen* the_screen, signed int x, signed int y, signe
 		return false;
 	}
 
-	result = Graphics_FillBox(the_screen, x, y, the_line_len, 0, the_value);
+	result = Graphics_FillBox(the_screen, x, y, the_line_len, 0, the_color);
 
 	return result;
 }
 
 
 //! Draws a vertical line from specified coords, for n pixels
-//! @param	the_value: a 1-byte index to the current LUT
+//! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawVLine(Screen* the_screen, signed int x, signed int y, signed int the_line_len, unsigned char the_value)
+boolean Graphics_DrawVLine(Screen* the_screen, signed int x, signed int y, signed int the_line_len, unsigned char the_color)
 {
 	unsigned int dy;
 
-	//DEBUG_OUT(("%s %d: x=%i, y=%i, the_line_len=%i, the_value=%i", __func__, __LINE__, x, y, the_line_len, the_value));
+	//DEBUG_OUT(("%s %d: x=%i, y=%i, the_line_len=%i, the_color=%i", __func__, __LINE__, x, y, the_line_len, the_color));
 	
 	if (the_screen == NULL)
 	{
@@ -570,7 +605,7 @@ boolean Graphics_DrawVLine(Screen* the_screen, signed int x, signed int y, signe
 	
 	for (dy = 0; dy < the_line_len; dy++)
 	{
-		Graphics_SetPixelAtXY(the_screen, x, y + dy, the_value);
+		Graphics_SetPixelAtXY(the_screen, x, y + dy, the_color);
 	}
 	
 	return true;
@@ -578,14 +613,14 @@ boolean Graphics_DrawVLine(Screen* the_screen, signed int x, signed int y, signe
 
 
 //! Draws a rectangle based on 2 sets of coords, using the specified LUT value
-//! @param	the_value: a 1-byte index to the current LUT
+//! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawBoxCoords(Screen* the_screen, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_value)
+boolean Graphics_DrawBoxCoords(Screen* the_screen, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_color)
 {
 	signed int	dy;
 	signed int	dx;
 
-	//DEBUG_OUT(("%s %d: x1=%i, y1=%i, x2=%i, y2=%i, the_value=%i", __func__, __LINE__, x1, y1, x2, y2, the_value));
+	//DEBUG_OUT(("%s %d: x1=%i, y1=%i, x2=%i, y2=%i, the_color=%i", __func__, __LINE__, x1, y1, x2, y2, the_color));
 	
 	if (the_screen == NULL)
 	{
@@ -615,25 +650,25 @@ boolean Graphics_DrawBoxCoords(Screen* the_screen, signed int x1, signed int y1,
 	dx = x2 - x1 + 1;
 	dy = y2 - y1 + 1;
 	
-	if (!Graphics_DrawHLine(the_screen, x1, y1, dx, the_value))
+	if (!Graphics_DrawHLine(the_screen, x1, y1, dx, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_DrawVLine(the_screen, x2, y1, dy, the_value))
+	if (!Graphics_DrawVLine(the_screen, x2, y1, dy, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_DrawHLine(the_screen, x1, y2, dx, the_value))
+	if (!Graphics_DrawHLine(the_screen, x1, y2, dx, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_DrawVLine(the_screen, x1, y1, dy, the_value))
+	if (!Graphics_DrawVLine(the_screen, x1, y1, dy, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
@@ -643,15 +678,89 @@ boolean Graphics_DrawBoxCoords(Screen* the_screen, signed int x1, signed int y1,
 }
 
 
-//! Draws a rectangle based on start coords and width/height, using the specified LUT value
+//! Draws a rectangle based on start coords and width/height, and optionally fills the rectangle.
 //! @param	width: width, in pixels, of the rectangle to be drawn
 //! @param	height: height, in pixels, of the rectangle to be drawn
-//! @param	the_value: a 1-byte index to the current LUT
+//! @param	the_color: a 1-byte index to the current LUT
+//! @param	do_fill: If true, the box will be filled with the provided color. If false, the box will only draw the outline.
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, unsigned char the_value)
+boolean Graphics_DrawBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, unsigned char the_color, boolean do_fill)
 {	
 
-	//DEBUG_OUT(("%s %d: x=%i, y=%i, width=%i, height=%i, the_value=%i", __func__, __LINE__, x, y, width, height, the_value));
+	//DEBUG_OUT(("%s %d: x=%i, y=%i, width=%i, height=%i, the_color=%i", __func__, __LINE__, x, y, width, height, the_color));
+
+	if (the_screen == NULL)
+	{
+		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
+		return false;
+	}
+
+	if (!Graphics_ValidateAll(the_screen, x, y))
+	{
+		LOG_ERR(("%s %d: illegal screen id, coordinate, or color", __func__, __LINE__));
+		return false;
+	}
+	
+	if (!Graphics_ValidateXY(the_screen, x + width - 1, y + height - 1))
+	{
+		LOG_ERR(("%s %d: illegal coordinates. x2=%i, y2=%i", __func__, __LINE__,  x + width - 1, y + height - 1));
+		return false;
+	}
+
+	// LOGIC:
+	//   if fill is needed, it's faster to simply do one rect fill than draw the lines
+	//   if fill is not needed, we need 4 line draw calls
+	
+	if (do_fill)
+	{
+		if (!Graphics_FillBox(the_screen, x, y, width, height - 1, the_color))
+		{
+			LOG_ERR(("%s %d: draw filled box failed", __func__, __LINE__));
+			return false;
+		}
+	}
+	else
+	{
+		if (!Graphics_DrawHLine(the_screen, x, y, width, the_color))
+		{
+			LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
+			return false;
+		}
+	
+		if (!Graphics_DrawVLine(the_screen, x + width - 1, y, height, the_color))
+		{
+			LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
+			return false;
+		}
+	
+		if (!Graphics_DrawHLine(the_screen, x, y + height - 1, width, the_color))
+		{
+			LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
+			return false;
+		}
+	
+		if (!Graphics_DrawVLine(the_screen, x, y, height, the_color))
+		{
+			LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
+			return false;
+		}
+	}
+		
+	return true;
+}
+
+
+//! Draws a rounded rectangle with the specified size and radius, and optionally fills the rectangle.
+//! @param	width: width, in pixels, of the rectangle to be drawn
+//! @param	height: height, in pixels, of the rectangle to be drawn
+//! @param	radius: radius, in pixels, of the arc to be applied to the rectangle's corners. Minimum 3, maximum 20.
+//! @param	the_color: a 1-byte index to the current color LUT
+//! @param	do_fill: If true, the box will be filled with the provided color. If false, the box will only draw the outline.
+//! @return	returns false on any error/invalid input.
+boolean Graphics_DrawRoundBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, signed int radius, unsigned char the_color, boolean do_fill)
+{	
+
+	//DEBUG_OUT(("%s %d: x=%i, y=%i, width=%i, height=%i, the_color=%i", __func__, __LINE__, x, y, width, height, the_color));
 
 	if (the_screen == NULL)
 	{
@@ -671,64 +780,7 @@ boolean Graphics_DrawBox(Screen* the_screen, signed int x, signed int y, signed 
 		return false;
 	}
 
-	if (!Graphics_DrawHLine(the_screen, x, y, width, the_value))
-	{
-		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
-		return false;
-	}
-	
-	if (!Graphics_DrawVLine(the_screen, x + width - 1, y, height, the_value))
-	{
-		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
-		return false;
-	}
-	
-	if (!Graphics_DrawHLine(the_screen, x, y + height - 1, width, the_value))
-	{
-		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
-		return false;
-	}
-	
-	if (!Graphics_DrawVLine(the_screen, x, y, height, the_value))
-	{
-		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
-		return false;
-	}
-		
-	return true;
-}
-
-
-//! Draws a rounded rectangle based on start coords and width/height, using the specified LUT value
-//! @param	width: width, in pixels, of the rectangle to be drawn
-//! @param	height: height, in pixels, of the rectangle to be drawn
-//! @param	radius: radius, in pixels, of the arc to be applied to the rectangle's corners. Maximum allowed is 20.
-//! @param	the_value: a 1-byte index to the current LUT
-//! @return	returns false on any error/invalid input.
-boolean Graphics_DrawRoundBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, signed int radius, unsigned char the_value)
-{	
-
-	//DEBUG_OUT(("%s %d: x=%i, y=%i, width=%i, height=%i, the_value=%i", __func__, __LINE__, x, y, width, height, the_value));
-
-	if (the_screen == NULL)
-	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
-		return false;
-	}
-
-	if (!Graphics_ValidateAll(the_screen, x, y))
-	{
-		LOG_ERR(("%s %d: illegal screen id, coordinate, or color", __func__, __LINE__));
-		return false;
-	}
-	
-	if (!Graphics_ValidateXY(the_screen, x + width - 1, y + height - 1))
-	{
-		LOG_ERR(("%s %d: illegal coordinate", __func__, __LINE__));
-		return false;
-	}
-
-	if (radius > 20)
+	if (3 > radius || radius > 20)
 	{
 		LOG_ERR(("%s %d: illegal roundrect radius: %i", __func__, __LINE__, radius));
 		return false;
@@ -741,34 +793,46 @@ boolean Graphics_DrawRoundBox(Screen* the_screen, signed int x, signed int y, si
 	y += radius;
 	
 	// Draw 4 circle quadrants
-	Graphics_DrawCircleQuadrants(the_screen, x, y, radius, the_value, PARAM_SKIP_NE, PARAM_SKIP_SE, PARAM_SKIP_SW, PARAM_DRAW_NW);
-	Graphics_DrawCircleQuadrants(the_screen, x + width, y, radius, the_value, PARAM_DRAW_NE, PARAM_SKIP_SE, PARAM_SKIP_SW, PARAM_SKIP_NW);
-	Graphics_DrawCircleQuadrants(the_screen, x, y + height, radius, the_value, PARAM_SKIP_NE, PARAM_SKIP_SE, PARAM_DRAW_SW, PARAM_SKIP_NW);
-	Graphics_DrawCircleQuadrants(the_screen, x + width, y + height, radius, the_value, PARAM_SKIP_NE, PARAM_DRAW_SE, PARAM_SKIP_SW, PARAM_SKIP_NW);
+	Graphics_DrawCircleQuadrants(the_screen, x, y, radius, the_color, PARAM_SKIP_NE, PARAM_SKIP_SE, PARAM_SKIP_SW, PARAM_DRAW_NW);
+	Graphics_DrawCircleQuadrants(the_screen, x + width, y, radius, the_color, PARAM_DRAW_NE, PARAM_SKIP_SE, PARAM_SKIP_SW, PARAM_SKIP_NW);
+	Graphics_DrawCircleQuadrants(the_screen, x, y + height, radius, the_color, PARAM_SKIP_NE, PARAM_SKIP_SE, PARAM_DRAW_SW, PARAM_SKIP_NW);
+	Graphics_DrawCircleQuadrants(the_screen, x + width, y + height, radius, the_color, PARAM_SKIP_NE, PARAM_DRAW_SE, PARAM_SKIP_SW, PARAM_SKIP_NW);
 	
 	// draw 4 shortened lines that will match up with the edges of the arcs
-	if (!Graphics_DrawHLine(the_screen, x, y - radius, width, the_value))
+	if (!Graphics_DrawHLine(the_screen, x, y - radius, width, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_DrawVLine(the_screen, x + width + radius, y, height, the_value))
+	if (!Graphics_DrawVLine(the_screen, x + width + radius, y, height, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_DrawHLine(the_screen, x, y + height + radius, width, the_value))
+	if (!Graphics_DrawHLine(the_screen, x, y + height + radius, width, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_DrawVLine(the_screen, x - radius, y, height, the_value))
+	if (!Graphics_DrawVLine(the_screen, x - radius, y, height, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
+	}
+	
+	// fill with same color as outline, if specified
+	if (do_fill)
+	{
+		Graphics_FillBox(the_screen, x + radius, y + 1, width - radius*2, radius, the_color);
+		Graphics_FillBox(the_screen, x + 1, y + radius, width - 1, height-radius*2, the_color);
+		Graphics_FillBox(the_screen, x + radius, y + height-radius*1, width - radius*2, radius-1, the_color);
+		Graphics_Fill(the_screen, x + radius - 1, y + 1, the_color);
+		Graphics_Fill(the_screen, x + (width - radius) + 1, y + 1, the_color);
+		Graphics_Fill(the_screen, x + radius - 1, y + (height - radius) + 1, the_color);
+		Graphics_Fill(the_screen, x + (width - radius) + 1, y + (height - radius) + 1, the_color);
 	}
 		
 	return true;
@@ -777,7 +841,7 @@ boolean Graphics_DrawRoundBox(Screen* the_screen, signed int x, signed int y, si
 
 //! Draw a circle
 //! Based on http://rosettacode.org/wiki/Bitmap/Midpoint_circle_algorithm#C
-boolean Graphics_DrawCircle(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_value)
+boolean Graphics_DrawCircle(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_color)
 {
 	if (the_screen == NULL)
 	{
@@ -791,7 +855,7 @@ boolean Graphics_DrawCircle(Screen* the_screen, signed int x1, signed int y1, si
 		return false;
 	}
 
-	return Graphics_DrawCircleQuadrants(the_screen, x1, y1, radius, the_value, PARAM_DRAW_NE, PARAM_DRAW_SE, PARAM_DRAW_SW, PARAM_DRAW_NW);
+	return Graphics_DrawCircleQuadrants(the_screen, x1, y1, radius, the_color, PARAM_DRAW_NE, PARAM_DRAW_SE, PARAM_DRAW_SW, PARAM_DRAW_NW);
 }
 
 
