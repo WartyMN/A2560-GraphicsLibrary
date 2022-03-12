@@ -42,6 +42,7 @@ See "docs/html/index.html".
  * draw a circle
  * fill an enclosed area
  * draw a round rect
+ * paint a round rect
  * draw a line
  * get the value of a pixel, from specified x/y coords
  * set the value of a pixel, from specified x/y coords
@@ -67,6 +68,7 @@ See "docs/html/index.html".
  * fill an entire screen of bitmap
  * fill a rect
  * draw a rect
+ * draw a round rect
  * draw a line
  * draw a circle
  * get the value of a pixel, from specified x/y coords
@@ -79,7 +81,7 @@ See "docs/html/index.html".
  * copy a bitmap
  * load a bitmap from disk
  * fill an enclosed area
- * draw a round rect
+ * paint a round rect
  * copy a rect of pixel mem, apply a mask to it, and transfer to another or same bitmap
  * change LUT
  * load a LUT from disk

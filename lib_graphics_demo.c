@@ -70,6 +70,7 @@ void Demo_Graphics_DrawHLine1(void);
 void Demo_Graphics_DrawLine(void);
 void Demo_Graphics_DrawBox(void);
 void Demo_Graphics_DrawBoxCoords(void);
+void Demo_Graphics_DrawRoundBox(void);
 void Demo_Graphics_DrawCircle(void);
 void Demo_Graphics_Blit1(void);
 void Demo_Graphics_ScreenResolution1(void);
@@ -84,29 +85,29 @@ void Demo_Graphics_ScreenResolution2(void);
 // have user hit a key, then clear screens
 void WaitForUser(void)
 {
-	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_A], 1, 4, (char*)"Press any key to continue", FG_COLOR_YELLOW, BG_COLOR_DK_BLUE);
+	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], 1, 4, (char*)"Press any key to continue", FG_COLOR_YELLOW, BG_COLOR_DK_BLUE);
 	
 	getchar();
 	
 	Graphics_FillMemory(&global_screen[ID_CHANNEL_B], 0x0f);
-	Text_FillCharMem(&global_screen[ID_CHANNEL_A], ' ');
-	Text_FillAttrMem(&global_screen[ID_CHANNEL_A], 159);
+	Text_FillCharMem(&global_screen[ID_CHANNEL_B], ' ');
+	//Text_FillAttrMem(&global_screen[ID_CHANNEL_B], 159);
 }
 
 // Draw fancy box on the B screen and display demo description
 void ShowDescription(char* the_message)
 {
 	signed int	x1 = 0;
-	signed int	x2 = global_screen[ID_CHANNEL_A].text_cols_vis_ - 1;
+	signed int	x2 = global_screen[ID_CHANNEL_B].text_cols_vis_ - 1;
 	signed int	y1 = 0;
 	signed int	y2 = 5;
 
 	// draw box and fill contents in prep for next demo description
-	Text_DrawBoxCoordsFancy(&global_screen[ID_CHANNEL_A], x1, y1, x2, y2, FG_COLOR_BLUE, BG_COLOR_DK_BLUE);
-	Text_FillBox(&global_screen[ID_CHANNEL_A], x1+1, y1+1, x2-1, y2-1, ' ', FG_COLOR_WHITE, BG_COLOR_DK_BLUE);
+	Text_DrawBoxCoordsFancy(&global_screen[ID_CHANNEL_B], x1, y1, x2, y2, FG_COLOR_BLUE, BG_COLOR_DK_BLUE);
+	Text_FillBox(&global_screen[ID_CHANNEL_B], x1+1, y1+1, x2-1, y2-1, ' ', FG_COLOR_WHITE, BG_COLOR_DK_BLUE);
 	
 	// wrap text into the message box, leaving one row at the bottom for "press any key"
-	Text_DrawStringInBox(&global_screen[ID_CHANNEL_A], x1+1, y1+1, x2-1, y2-1, the_message, FG_COLOR_WHITE, BG_COLOR_DK_BLUE, NULL);
+	Text_DrawStringInBox(&global_screen[ID_CHANNEL_B], x1+1, y1+1, x2-1, y2-1, the_message, FG_COLOR_WHITE, BG_COLOR_DK_BLUE, NULL);
 }
 
 
@@ -156,8 +157,6 @@ void Demo_Graphics_FillBox3(void)
 {
 	int x = 5;
 	int	y = 8*6;
-// 	int	width = global_screen[ID_CHANNEL_B].width_ - x - 30;
-// 	int height = global_screen[ID_CHANNEL_B].height_ - y - 100;
 	
 	ShowDescription("Graphics_FillBox -> fill various squares with different color values");	
 	Graphics_FillBox(&global_screen[ID_CHANNEL_B], x + 30, y, 250, 100, 0x55);
@@ -187,9 +186,6 @@ void Demo_Graphics_DrawHLine1(void)
 	signed int		x;
 	signed int		y;
 	signed int		line_len;
-
-// 	Graphics_FillMemory(&global_screen[ID_CHANNEL_B], '.');
-// 	Text_FillAttrMem(&global_screen[ID_CHANNEL_B], 31);
 
 	ShowDescription("Text_DrawHLine / Text_DrawVLine -> Draw straight lines using a specified color");	
 	
@@ -265,6 +261,31 @@ void Demo_Graphics_DrawBoxCoords(void)
 }
 
 
+void Demo_Graphics_DrawRoundBox(void)
+{
+	int 	x = 60;
+	int		y = 8*7;
+	int		width = 40;
+	int		height = 20;
+	int		radius = 8;
+	int		i;
+	int		color = 0x20;
+	int		xleft = 560;
+	
+	ShowDescription("Demo_Graphics_DrawRoundBox -> Draw an unfilled rect with rounded corners. Specify start coords, width, height, and corner radius.");	
+
+	for (i = 0; i <= 20; i++)
+	{
+		Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], x + color, y + color, width + i*2, height + i*2, i, color);
+		Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], xleft - color, y + color, width*2 + i*2, height*2 + i*2, 20 - i, color);
+		color += 7;
+	}
+
+	
+	WaitForUser();
+}
+
+
 void Demo_Graphics_DrawCircle(void)
 {
 	signed int		x1 = 320;
@@ -281,7 +302,6 @@ void Demo_Graphics_DrawCircle(void)
 		radius += 3;
 	}
 
-// 	Graphics_DrawCircle(&global_screen[ID_CHANNEL_B], x1, y1, radius, 0xff);
 	Graphics_DrawCircle(&global_screen[ID_CHANNEL_B], 25, 25, 12, 0xff);
 	Graphics_DrawCircle(&global_screen[ID_CHANNEL_B], 25, 25, 15, 0xff);
 
@@ -420,21 +440,23 @@ void RunDemo(void)
 	WaitForUser();
 	
 	Demo_Graphics_FillMemory1();
-// 	Demo_Graphics_FillMemory2();
-// 	
-// 	Demo_Graphics_FillBox1();
-// 	Demo_Graphics_FillBox2();
-// 	Demo_Graphics_FillBox3();
-// 
-// 	Demo_Graphics_SetPixelAtXY();
-// 
-// 	Demo_Graphics_DrawHLine1();
+	Demo_Graphics_FillMemory2();
 	
-// 	Demo_Graphics_DrawLine();
+	Demo_Graphics_FillBox1();
+	Demo_Graphics_FillBox2();
+	Demo_Graphics_FillBox3();
+
+	Demo_Graphics_SetPixelAtXY();
+
+	Demo_Graphics_DrawHLine1();
+	
+	Demo_Graphics_DrawLine();
 	
 	Demo_Graphics_DrawBox();
 	Demo_Graphics_DrawBoxCoords();
 
+	Demo_Graphics_DrawRoundBox();
+	
 	Demo_Graphics_DrawCircle();
 	
 	Demo_Graphics_Blit1();
@@ -470,7 +492,8 @@ int main(int argc, char* argv[])
 		exit(0);
 	}
 	
-	Graphics_SetModeGraphics(&global_screen[ID_CHANNEL_B]);
+	//Graphics_SetModeGraphics(&global_screen[ID_CHANNEL_B]);
+	Graphics_SetModeText(&global_screen[ID_CHANNEL_B], true);
 	
 	RunDemo();
 	

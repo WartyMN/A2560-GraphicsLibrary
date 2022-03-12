@@ -51,7 +51,7 @@
 
 // project includes
 
-// A2650 includes
+// A2560 includes
 #include <mcp/syscalls.h>
 #include <mb/a2560_platform.h>
 #include <mb/lib_general.h>
@@ -62,6 +62,14 @@
 /*                            Macro Definitions                              */
 /*****************************************************************************/
 
+#define PARAM_DRAW_NE	true	//!< for Graphics_DrawCircleQuadrants, do draw NE quadrant
+#define PARAM_DRAW_SE	true	//!< for Graphics_DrawCircleQuadrants, do draw SE quadrant
+#define PARAM_DRAW_SW	true	//!< for Graphics_DrawCircleQuadrants, do draw SW quadrant
+#define PARAM_DRAW_NW	true	//!< for Graphics_DrawCircleQuadrants, do draw NW quadrant
+#define PARAM_SKIP_NE	false	//!< for Graphics_DrawCircleQuadrants, do NOT draw NE quadrant
+#define PARAM_SKIP_SE	false	//!< for Graphics_DrawCircleQuadrants, do NOT draw SE quadrant
+#define PARAM_SKIP_SW	false	//!< for Graphics_DrawCircleQuadrants, do NOT draw SW quadrant
+#define PARAM_SKIP_NW	false	//!< for Graphics_DrawCircleQuadrants, do NOT draw NW quadrant
 
 
 /*****************************************************************************/
@@ -173,6 +181,14 @@ boolean Graphics_DrawBoxCoords(Screen* the_screen, signed int x1, signed int y1,
 //! @param	the_value: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
 boolean Graphics_DrawBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, unsigned char the_value);
+
+//! Draws a rounded rectangle based on start coords and width/height, using the specified LUT value
+//! @param	width: width, in pixels, of the rectangle to be drawn
+//! @param	height: height, in pixels, of the rectangle to be drawn
+//! @param	radius: radius, in pixels, of the arc to be applied to the rectangle's corners. Maximum allowed is 20.
+//! @param	the_value: a 1-byte index to the current LUT
+//! @return	returns false on any error/invalid input.
+boolean Graphics_DrawRoundBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, signed int radius, unsigned char the_value);
 
 //! Draw a circle
 //! Based on http://rosettacode.org/wiki/Bitmap/Midpoint_circle_algorithm#C

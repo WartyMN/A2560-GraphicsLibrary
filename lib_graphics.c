@@ -62,6 +62,10 @@ boolean Graphics_ValidateXY(Screen* the_screen, signed int x, signed int y);
 // calculate the VRAM location of the specified coordinate
 char* Graphics_GetMemLocForXY(Screen* the_screen, signed int x, signed int y);
 
+//! Draw 1 to 4 quadrants of a circle
+//! Only the specified quadrants will be drawn. This makes it possible to use this to make round rects, by only passing 1 quadrant.
+//! Based on http://rosettacode.org/wiki/Bitmap/Midpoint_circle_algorithm#C
+boolean Graphics_DrawCircleQuadrants(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_value, boolean ne, boolean se, boolean sw, boolean nw);
 
 //! \endcond
 
@@ -136,6 +140,83 @@ char* Graphics_GetMemLocForXY(Screen* the_screen, signed int x, signed int y)
 	//DEBUG_OUT(("%s %d: screen=%i, x=%i, y=%i, for-attr=%i, calc=%i, loc=%p", __func__, __LINE__, (signed int)the_screen_id, x, y, for_attr, (the_screen->text_mem_cols_ * y) + x, the_write_loc));
 	
 	return the_write_loc;
+}
+
+
+//! Draw 1 to 4 quadrants of a circle
+//! Only the specified quadrants will be drawn. This makes it possible to use this to make round rects, by only passing 1 quadrant.
+//! NO VALIDATION PERFORMEND ON PARAMETERS. CALLING METHOD MUST VALIDATE.
+//! Based on http://rosettacode.org/wiki/Bitmap/Midpoint_circle_algorithm#C
+boolean Graphics_DrawCircleQuadrants(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_value, boolean ne, boolean se, boolean sw, boolean nw)
+{
+    int	f;
+    int	ddF_x;
+    int	ddF_y;
+    int	x;
+    int	y;
+ 
+	f = 1 - radius;
+	ddF_x = 0;
+	ddF_y = -2 * radius;
+	x = 0;
+	y = radius;
+
+	if (se || sw)
+	{
+		Graphics_SetPixelAtXY(the_screen, x1, y1 + radius, the_value);
+	}
+	if (ne || nw)
+	{
+		Graphics_SetPixelAtXY(the_screen, x1, y1 - radius, the_value);
+	}
+	if (se || ne)
+	{
+		Graphics_SetPixelAtXY(the_screen, x1 + radius, y1, the_value);
+	}
+	if (nw || sw)
+	{
+		Graphics_SetPixelAtXY(the_screen, x1 - radius, y1, the_value);
+	}
+ 
+    while(x < y) 
+	{
+		if(f >= 0) 
+		{
+			y--;
+			ddF_y += 2;
+			f += ddF_y;
+		}
+
+		x++;
+		ddF_x += 2;
+		f += ddF_x + 1;  
+ 
+ 		if (se)
+        {
+			Graphics_SetPixelAtXY(the_screen, x1 + x, y1 + y, the_value);
+			Graphics_SetPixelAtXY(the_screen, x1 + y, y1 + x, the_value);
+        }
+ 
+ 		if (sw)
+        {
+			Graphics_SetPixelAtXY(the_screen, x1 - x, y1 + y, the_value);
+			Graphics_SetPixelAtXY(the_screen, x1 - y, y1 + x, the_value);
+        }
+ 
+ 		if (ne)
+        {
+			Graphics_SetPixelAtXY(the_screen, x1 + x, y1 - y, the_value);
+			Graphics_SetPixelAtXY(the_screen, x1 + y, y1 - x, the_value);
+        }
+ 
+ 		if (nw)
+        {
+			Graphics_SetPixelAtXY(the_screen, x1 - x, y1 - y, the_value);
+			Graphics_SetPixelAtXY(the_screen, x1 - y, y1 - x, the_value);
+        }
+    }
+    
+    return true;
 }
 
 
@@ -618,16 +699,17 @@ boolean Graphics_DrawBox(Screen* the_screen, signed int x, signed int y, signed 
 }
 
 
-//! Draw a circle
-//! Based on http://rosettacode.org/wiki/Bitmap/Midpoint_circle_algorithm#C
-boolean Graphics_DrawCircle(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_value)
-{
-    int	f;
-    int	ddF_x;
-    int	ddF_y;
-    int	x;
-    int	y;
- 
+//! Draws a rounded rectangle based on start coords and width/height, using the specified LUT value
+//! @param	width: width, in pixels, of the rectangle to be drawn
+//! @param	height: height, in pixels, of the rectangle to be drawn
+//! @param	radius: radius, in pixels, of the arc to be applied to the rectangle's corners. Maximum allowed is 20.
+//! @param	the_value: a 1-byte index to the current LUT
+//! @return	returns false on any error/invalid input.
+boolean Graphics_DrawRoundBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, signed int radius, unsigned char the_value)
+{	
+
+	//DEBUG_OUT(("%s %d: x=%i, y=%i, width=%i, height=%i, the_value=%i", __func__, __LINE__, x, y, width, height, the_value));
+
 	if (the_screen == NULL)
 	{
 		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
@@ -640,42 +722,76 @@ boolean Graphics_DrawCircle(Screen* the_screen, signed int x1, signed int y1, si
 		return false;
 	}
 	
-	f = 1 - radius;
-	ddF_x = 0;
-	ddF_y = -2 * radius;
-	x = 0;
-	y = radius;
-
-	Graphics_SetPixelAtXY(the_screen, x1, y1 + radius, the_value);
-	Graphics_SetPixelAtXY(the_screen, x1, y1 - radius, the_value);
-	Graphics_SetPixelAtXY(the_screen, x1 + radius, y1, the_value);
-	Graphics_SetPixelAtXY(the_screen, x1 - radius, y1, the_value);
- 
-    while(x < y) 
+	if (!Graphics_ValidateXY(the_screen, x + width - 1, y + height - 1))
 	{
-		if(f >= 0) 
-		{
-			y--;
-			ddF_y += 2;
-			f += ddF_y;
-		}
+		LOG_ERR(("%s %d: illegal coordinate", __func__, __LINE__));
+		return false;
+	}
 
-		x++;
-		ddF_x += 2;
-		f += ddF_x + 1;  
-        // SE quadrant
-		Graphics_SetPixelAtXY(the_screen, x1 + x, y1 + y, the_value);
-		Graphics_SetPixelAtXY(the_screen, x1 + y, y1 + x, the_value);
-		// SW quadrant
-		Graphics_SetPixelAtXY(the_screen, x1 - x, y1 + y, the_value);
-		Graphics_SetPixelAtXY(the_screen, x1 - y, y1 + x, the_value);
-		// NE quadrant
-		Graphics_SetPixelAtXY(the_screen, x1 + x, y1 - y, the_value);
-		Graphics_SetPixelAtXY(the_screen, x1 + y, y1 - x, the_value);
-		// NW quadrant
-		Graphics_SetPixelAtXY(the_screen, x1 - x, y1 - y, the_value);
-		Graphics_SetPixelAtXY(the_screen, x1 - y, y1 - x, the_value);
-    }
+	if (radius > 20)
+	{
+		LOG_ERR(("%s %d: illegal roundrect radius: %i", __func__, __LINE__, radius));
+		return false;
+	}
+	
+	// adjust box x, y, width, height values to line up with the edges of the arcs
+	width -= radius * 2;
+	height -= radius * 2;
+	x += radius;
+	y += radius;
+	
+	// Draw 4 circle quadrants
+	Graphics_DrawCircleQuadrants(the_screen, x, y, radius, the_value, PARAM_SKIP_NE, PARAM_SKIP_SE, PARAM_SKIP_SW, PARAM_DRAW_NW);
+	Graphics_DrawCircleQuadrants(the_screen, x + width, y, radius, the_value, PARAM_DRAW_NE, PARAM_SKIP_SE, PARAM_SKIP_SW, PARAM_SKIP_NW);
+	Graphics_DrawCircleQuadrants(the_screen, x, y + height, radius, the_value, PARAM_SKIP_NE, PARAM_SKIP_SE, PARAM_DRAW_SW, PARAM_SKIP_NW);
+	Graphics_DrawCircleQuadrants(the_screen, x + width, y + height, radius, the_value, PARAM_SKIP_NE, PARAM_DRAW_SE, PARAM_SKIP_SW, PARAM_SKIP_NW);
+	
+	// draw 4 shortened lines that will match up with the edges of the arcs
+	if (!Graphics_DrawHLine(the_screen, x, y - radius, width, the_value))
+	{
+		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
+		return false;
+	}
+	
+	if (!Graphics_DrawVLine(the_screen, x + width + radius, y, height, the_value))
+	{
+		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
+		return false;
+	}
+	
+	if (!Graphics_DrawHLine(the_screen, x, y + height + radius, width, the_value))
+	{
+		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
+		return false;
+	}
+	
+	if (!Graphics_DrawVLine(the_screen, x - radius, y, height, the_value))
+	{
+		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
+		return false;
+	}
+		
+	return true;
+}
+
+
+//! Draw a circle
+//! Based on http://rosettacode.org/wiki/Bitmap/Midpoint_circle_algorithm#C
+boolean Graphics_DrawCircle(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_value)
+{
+	if (the_screen == NULL)
+	{
+		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
+		return false;
+	}
+
+	if (!Graphics_ValidateAll(the_screen, x1, y1))
+	{
+		LOG_ERR(("%s %d: illegal screen id, coordinate, or color", __func__, __LINE__));
+		return false;
+	}
+
+	return Graphics_DrawCircleQuadrants(the_screen, x1, y1, radius, the_value, PARAM_DRAW_NE, PARAM_DRAW_SE, PARAM_DRAW_SW, PARAM_DRAW_NW);
 }
 
 
