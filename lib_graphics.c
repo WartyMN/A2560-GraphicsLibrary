@@ -339,7 +339,7 @@ boolean Graphics_BlitBitMap(Screen* the_screen, Bitmap* src_bm, int src_x, int s
 		src_y = 0;
 	}
 
-	//LOG_INFO(("%s %d: final parameters: src_x=%i, src_y=%i, dst_x=%i, dst_y=%i, width=%i, height=%i.", __func__, __LINE__, src_x, src_y, dst_x, dst_y, width, height));
+	//DEBUG_OUT(("%s %d: final parameters: src_x=%i, src_y=%i, dst_x=%i, dst_y=%i, width=%i, height=%i.", __func__, __LINE__, src_x, src_y, dst_x, dst_y, width, height));
 
 	// checks complete. ready to copy. 
 	the_read_loc = src_bm->addr_ + (src_bm->width_ * src_y) + src_x;
@@ -421,7 +421,127 @@ boolean Graphics_FillBox(Screen* the_screen, signed int x, signed int y, signed 
 
 
 
-// **** Font functions *****
+// **** Bitmap functions *****
+
+//! Set the "pen" color
+//! This is the color that the next pen-based graphics function will use
+//! This only affects functions that use the pen: any graphics function that specifies a color will use that instead
+boolean Bitmap_SetCurrentColor(Bitmap* the_bitmap, uint8_t the_color)
+{
+	if (the_bitmap == NULL)
+	{
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
+		return false;
+	}
+
+	the_bitmap->color_ = the_color;
+	
+	return true;
+}
+
+
+//! Set the "pen" position
+//! This is the location that the next pen-based graphics function will use for a starting location
+//! NOTE: you are allowed to set negative values, but not values greater than the height/width of the screen. This is to allow for functions that may have portions visible on the screen, such as a row of text that starts 2 pixels to the left of the bitmap's left edge. 
+//! This only affects functions that use the pen: any graphics function that specifies an X, Y coordinate will use that instead
+boolean Bitmap_SetCurrentXY(Bitmap* the_bitmap, signed int x, signed int y)
+{
+	if (the_bitmap == NULL)
+	{
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
+		return false;
+	}
+
+	if (x >= the_bitmap->width_ || y >= the_bitmap->height_)
+	{
+		LOG_ERR(("%s %d: invalid coordinates passed (%i, %i)", __func__, __LINE__, x, y));
+		return false;
+	}
+	
+	the_bitmap->x_ = x;
+	the_bitmap->y_ = y;
+	
+	return true;
+}
+
+
+//! Get the current color of the pen
+//! @return returns 0 on any error
+uint8_t Bitmap_GetCurrentColor(Bitmap* the_bitmap)
+{
+	if (the_bitmap == NULL)
+	{
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
+		return 0;
+	}
+
+	return the_bitmap->color_;
+}
+
+
+//! Get the current X position of the pen
+//! @return returns -1 on any error
+signed int Bitmap_GetCurrentX(Bitmap* the_bitmap)
+{
+	if (the_bitmap == NULL)
+	{
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
+		return -1;
+	}
+
+	return the_bitmap->x_;
+}
+
+//! Get the current Y position of the pen
+//! @return returns -1 on any error
+signed int Bitmap_GetCurrentY(Bitmap* the_bitmap)
+{
+	if (the_bitmap == NULL)
+	{
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
+		return -1;
+	}
+
+	return the_bitmap->y_;
+}
+
+
+// calculate the VRAM location of the specified coordinate within the bitmap
+unsigned char* Bitmap_GetMemLocForXY(Bitmap* the_bitmap, signed int x, signed int y)
+{
+	unsigned char*			the_write_loc;
+
+	if (the_bitmap == NULL)
+	{
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
+		return NULL;
+	}
+	
+	if (the_bitmap->addr_ == NULL)
+	{
+		LOG_ERR(("%s %d: passed bitmap had a NULL address", __func__, __LINE__));
+		return NULL;
+	}
+	
+	// LOGIC:
+	//   check that x and y are within the bitmap's coordinate box. if not, we can't calculate a memory loc for them.
+	
+	if (0 > x >= the_bitmap->width_ || 0 > y >= the_bitmap->height_)
+	{
+		LOG_ERR(("%s %d: invalid coordinates passed (%i, %i)", __func__, __LINE__, x, y));
+		return NULL;
+	}
+	
+	return the_bitmap->addr_ + (the_bitmap->width_ * y) + x;
+}
+
+
+// calculate the VRAM location of the current coordinate within the bitmap
+unsigned char* Bitmap_GetCurrentMemLoc(Bitmap* the_bitmap)
+{
+	return Bitmap_GetMemLocForXY(the_bitmap, the_bitmap->x_, the_bitmap->y_);
+}
+
 
 
 

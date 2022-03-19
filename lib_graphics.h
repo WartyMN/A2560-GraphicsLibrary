@@ -89,6 +89,10 @@ typedef struct Bitmap
 	unsigned char*	addr_;		//!< address of the start of the bitmap, within the machine's global address space. This is not the VICKY's local address for this bitmap. This address MUST be within the VRAM, however, it cannot be in non-VRAM memory space.
 	signed int		width_;		//!< width of the bitmap in pixels
 	signed int		height_;	//!< height of the bitmap in pixels
+	signed int		x_;			//!< H position within this bitmap, of the "pen", for functions that draw from that point
+	signed int		y_;			//!< V position within this bitmap, of the "pen", for functions that draw from that point
+	uint8_t			color_;		//!< color value to use for next "pen" based operation in this bitmap
+	Font*			font_;		//!< the currently selected font. All text drawing activities will use this font face.
 } Bitmap;
 
 
@@ -132,8 +136,35 @@ boolean Graphics_FillBox(Screen* the_screen, signed int x, signed int y, signed 
 
 
 
-// **** Font functions *****
+// **** Bitmap functions *****
 
+//! Set the "pen" color
+//! This is the color that the next pen-based graphics function will use
+//! This only affects functions that use the pen: any graphics function that specifies a color will use that instead
+boolean Bitmap_SetCurrentColor(Bitmap* the_bitmap, uint8_t the_color);
+
+//! Set the "pen" position
+//! This is the location that the next pen-based graphics function will use for a starting location
+//! This only affects functions that use the pen: any graphics function that specifies an X, Y coordinate will use that instead
+boolean Bitmap_SetCurrentXY(Bitmap* the_bitmap, signed int x, signed int y);
+
+//! Get the current color of the pen
+//! @return returns 0 on any error
+uint8_t Bitmap_GetCurrentColor(Bitmap* the_bitmap);
+
+//! Get the current X position of the pen
+//! @return returns -1 on any error
+signed int Bitmap_GetCurrentX(Bitmap* the_bitmap);
+
+//! Get the current Y position of the pen
+//! @return returns -1 on any error
+signed int Bitmap_GetCurrentY(Bitmap* the_bitmap);
+
+//! Calculate the VRAM location of the specified coordinate within the bitmap
+unsigned char* Bitmap_GetMemLocForXY(Bitmap* the_bitmap, signed int x, signed int y);
+
+//! Calculate the VRAM location of the current coordinate within the bitmap
+unsigned char* Bitmap_GetCurrentMemLoc(Bitmap* the_bitmap);
 
 
 
@@ -141,7 +172,9 @@ boolean Graphics_FillBox(Screen* the_screen, signed int x, signed int y, signed 
 // **** Set pixel functions *****
 
 
-// Set pixel at a specified x, y coord
+//! Set a char at a specified x, y coord
+//! @param	the_color: a 1-byte index to the current LUT
+//! @return	returns false on any error/invalid input.
 boolean Graphics_SetPixelAtXY(Screen* the_screen, signed int x, signed int y, unsigned char the_color);
 
 
@@ -149,7 +182,8 @@ boolean Graphics_SetPixelAtXY(Screen* the_screen, signed int x, signed int y, un
 // **** Get pixel functions *****
 
 
-// Get the pixel at a specified x, y coord
+//! Get the char at a specified x, y coord
+//! @return	returns a character code
 unsigned char Graphics_GetPixelAtXY(Screen* the_screen, signed int x, signed int y);
 
 
@@ -159,7 +193,7 @@ unsigned char Graphics_GetPixelAtXY(Screen* the_screen, signed int x, signed int
 
 //! Draws a line between 2 passed coordinates.
 //! Use for any line that is not perfectly vertical or perfectly horizontal
-//! Based on http://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C
+//! Based on http://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C. Used in C128 Lich King. 
 boolean Graphics_DrawLine(Screen* the_screen, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_color);
 
 //! Draws a horizontal line from specified coords, for n pixels, using the specified pixel value
