@@ -225,6 +225,7 @@ boolean Graphics_DrawCircleQuadrants(Screen* the_screen, signed int x1, signed i
 
 //! Perform a flood fill starting at the coordinate passed. 
 //! WARNING: this function is recursive, and if applied to a size even 1/10th the size of the screen, it can eat the stack. Either do not use this, or control its usage to just situations you can control. Or set an enormous stack size when building your app.
+//! @param	the_color: a 1-byte index to the current LUT
 boolean Graphics_Fill(Screen* the_screen, signed int x, signed int y, unsigned char the_color)
 {   
 	int		height;
@@ -362,6 +363,7 @@ boolean Graphics_BlitBitMap(Screen* the_screen, Bitmap* src_bm, int src_x, int s
 
 // Fill graphics memory with specified value
 // calling function must validate the screen ID before passing!
+//! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
 boolean Graphics_FillMemory(Screen* the_screen, unsigned char the_color)
 {
@@ -423,9 +425,37 @@ boolean Graphics_FillBox(Screen* the_screen, signed int x, signed int y, signed 
 
 // **** Bitmap functions *****
 
+//! Set the font
+//! This is the font that will be used for all font drawing in this bitmap
+//! @param	the_bitmap: reference to a valid Bitmap object.
+//! @param	the_font: reference to a complete, loaded Font object.
+//! @return Returns false on any error condition
+boolean Bitmap_SetCurrentFont(Bitmap* the_bitmap, Font* the_font)
+{
+	if (the_bitmap == NULL)
+	{
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
+		return false;
+	}
+
+	if (the_font == NULL)
+	{
+		LOG_ERR(("%s %d: passed font was NULL", __func__, __LINE__));
+		return false;
+	}
+
+	the_bitmap->font_ = the_font;
+	
+	return true;
+}
+
+
 //! Set the "pen" color
 //! This is the color that the next pen-based graphics function will use
 //! This only affects functions that use the pen: any graphics function that specifies a color will use that instead
+//! @param	the_bitmap: reference to a valid Bitmap object.
+//! @param	the_color: a 1-byte index to the current LUT
+//! @return Returns false on any error condition
 boolean Bitmap_SetCurrentColor(Bitmap* the_bitmap, uint8_t the_color)
 {
 	if (the_bitmap == NULL)
@@ -444,6 +474,10 @@ boolean Bitmap_SetCurrentColor(Bitmap* the_bitmap, uint8_t the_color)
 //! This is the location that the next pen-based graphics function will use for a starting location
 //! NOTE: you are allowed to set negative values, but not values greater than the height/width of the screen. This is to allow for functions that may have portions visible on the screen, such as a row of text that starts 2 pixels to the left of the bitmap's left edge. 
 //! This only affects functions that use the pen: any graphics function that specifies an X, Y coordinate will use that instead
+//! @param	the_bitmap: reference to a valid Bitmap object.
+//! @param	x: the horizontal position, between 0 and bitmap width - 1
+//! @param	y: the vertical position, between 0 and bitmap height - 1
+//! @return Returns false on any error condition
 boolean Bitmap_SetCurrentXY(Bitmap* the_bitmap, signed int x, signed int y)
 {
 	if (the_bitmap == NULL)
@@ -466,7 +500,8 @@ boolean Bitmap_SetCurrentXY(Bitmap* the_bitmap, signed int x, signed int y)
 
 
 //! Get the current color of the pen
-//! @return returns 0 on any error
+//! @param	the_bitmap: reference to a valid Bitmap object.
+//! @return Returns a 1-byte index to the current LUT, or 0 on any error
 uint8_t Bitmap_GetCurrentColor(Bitmap* the_bitmap)
 {
 	if (the_bitmap == NULL)
@@ -480,7 +515,8 @@ uint8_t Bitmap_GetCurrentColor(Bitmap* the_bitmap)
 
 
 //! Get the current X position of the pen
-//! @return returns -1 on any error
+//! @param	the_bitmap: reference to a valid Bitmap object.
+//! @return Returns -1 on any error
 signed int Bitmap_GetCurrentX(Bitmap* the_bitmap)
 {
 	if (the_bitmap == NULL)
@@ -493,7 +529,8 @@ signed int Bitmap_GetCurrentX(Bitmap* the_bitmap)
 }
 
 //! Get the current Y position of the pen
-//! @return returns -1 on any error
+//! @param	the_bitmap: reference to a valid Bitmap object.
+//! @return Returns -1 on any error
 signed int Bitmap_GetCurrentY(Bitmap* the_bitmap)
 {
 	if (the_bitmap == NULL)
@@ -506,7 +543,11 @@ signed int Bitmap_GetCurrentY(Bitmap* the_bitmap)
 }
 
 
-// calculate the VRAM location of the specified coordinate within the bitmap
+//! Calculate the VRAM location of the specified coordinate within the bitmap
+//! @param	the_bitmap: reference to a valid Bitmap object.
+//! @param	x: the horizontal position, between 0 and bitmap width - 1
+//! @param	y: the vertical position, between 0 and bitmap height - 1
+//! @return Returns a pointer to the VRAM location that corresponds to the passed X, Y, or NULL on any error condition
 unsigned char* Bitmap_GetMemLocForXY(Bitmap* the_bitmap, signed int x, signed int y)
 {
 	unsigned char*			the_write_loc;
@@ -536,7 +577,9 @@ unsigned char* Bitmap_GetMemLocForXY(Bitmap* the_bitmap, signed int x, signed in
 }
 
 
-// calculate the VRAM location of the current coordinate within the bitmap
+//! Calculate the VRAM location of the current coordinate within the bitmap
+//! @param	the_bitmap: reference to a valid Bitmap object.
+//! @return Returns a pointer to the VRAM location that corresponds to the current "pen" X, Y, or NULL on any error condition
 unsigned char* Bitmap_GetCurrentMemLoc(Bitmap* the_bitmap)
 {
 	return Bitmap_GetMemLocForXY(the_bitmap, the_bitmap->x_, the_bitmap->y_);

@@ -17,6 +17,7 @@ var lib__graphics_8h =
     [ "Bitmap_GetCurrentY", "lib__graphics_8h.html#a757bd86bd28bdf0bcaa04044f11d4eaa", null ],
     [ "Bitmap_GetMemLocForXY", "lib__graphics_8h.html#abd13646680782dd510ed4fc1b5c165f0", null ],
     [ "Bitmap_SetCurrentColor", "lib__graphics_8h.html#a96fe03d99b26758d74e34d2d900bdf1f", null ],
+    [ "Bitmap_SetCurrentFont", "lib__graphics_8h.html#adff678160a0620f955de89d76dc4c367", null ],
     [ "Bitmap_SetCurrentXY", "lib__graphics_8h.html#a9ff571e32a2943a459624ca411dab7bb", null ],
     [ "Graphics_BlitBitMap", "lib__graphics_8h.html#a8ee66ed140a6982fbed3babb75d3e357", null ],
     [ "Graphics_DrawBox", "lib__graphics_8h.html#a8610b8c66eeccd75727bd0eb153ae193", null ],

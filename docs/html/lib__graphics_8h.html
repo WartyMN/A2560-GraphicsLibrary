@@ -163,12 +163,14 @@ Functions</h2></td></tr>
 <tr class="memitem:a6134ccd7bcede8ef8dd9c5630b4f701c"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lib__graphics_8h.html#a6134ccd7bcede8ef8dd9c5630b4f701c">Graphics_FillBox</a> (Screen *the_screen, signed int x, signed int y, signed int width, signed int height, unsigned char the_color)</td></tr>
 <tr class="memdesc:a6134ccd7bcede8ef8dd9c5630b4f701c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fill pixel values for a specific box area calling function must validate screen id, coords!  <a href="lib__graphics_8h.html#a6134ccd7bcede8ef8dd9c5630b4f701c">More...</a><br /></td></tr>
 <tr class="separator:a6134ccd7bcede8ef8dd9c5630b4f701c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a96fe03d99b26758d74e34d2d900bdf1f"><td class="memItemLeft" align="right" valign="top"><a id="a96fe03d99b26758d74e34d2d900bdf1f" name="a96fe03d99b26758d74e34d2d900bdf1f"></a>
-boolean&#160;</td><td class="memItemRight" valign="bottom"><b>Bitmap_SetCurrentColor</b> (<a class="el" href="struct_bitmap.html">Bitmap</a> *the_bitmap, uint8_t the_color)</td></tr>
-<tr class="memdesc:a96fe03d99b26758d74e34d2d900bdf1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the "pen" color This is the color that the next pen-based graphics function will use This only affects functions that use the pen: any graphics function that specifies a color will use that instead. <br /></td></tr>
+<tr class="memitem:adff678160a0620f955de89d76dc4c367"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lib__graphics_8h.html#adff678160a0620f955de89d76dc4c367">Bitmap_SetCurrentFont</a> (<a class="el" href="struct_bitmap.html">Bitmap</a> *the_bitmap, Font *the_font)</td></tr>
+<tr class="memdesc:adff678160a0620f955de89d76dc4c367"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the font This is the font that will be used for all font drawing in this bitmap.  <a href="lib__graphics_8h.html#adff678160a0620f955de89d76dc4c367">More...</a><br /></td></tr>
+<tr class="separator:adff678160a0620f955de89d76dc4c367"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96fe03d99b26758d74e34d2d900bdf1f"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lib__graphics_8h.html#a96fe03d99b26758d74e34d2d900bdf1f">Bitmap_SetCurrentColor</a> (<a class="el" href="struct_bitmap.html">Bitmap</a> *the_bitmap, uint8_t the_color)</td></tr>
+<tr class="memdesc:a96fe03d99b26758d74e34d2d900bdf1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the "pen" color This is the color that the next pen-based graphics function will use This only affects functions that use the pen: any graphics function that specifies a color will use that instead.  <a href="lib__graphics_8h.html#a96fe03d99b26758d74e34d2d900bdf1f">More...</a><br /></td></tr>
 <tr class="separator:a96fe03d99b26758d74e34d2d900bdf1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ff571e32a2943a459624ca411dab7bb"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lib__graphics_8h.html#a9ff571e32a2943a459624ca411dab7bb">Bitmap_SetCurrentXY</a> (<a class="el" href="struct_bitmap.html">Bitmap</a> *the_bitmap, signed int x, signed int y)</td></tr>
-<tr class="memdesc:a9ff571e32a2943a459624ca411dab7bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the "pen" position This is the location that the next pen-based graphics function will use for a starting location This only affects functions that use the pen: any graphics function that specifies an X, Y coordinate will use that instead.  <a href="lib__graphics_8h.html#a9ff571e32a2943a459624ca411dab7bb">More...</a><br /></td></tr>
+<tr class="memdesc:a9ff571e32a2943a459624ca411dab7bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the "pen" position This is the location that the next pen-based graphics function will use for a starting location NOTE: you are allowed to set negative values, but not values greater than the height/width of the screen.  <a href="lib__graphics_8h.html#a9ff571e32a2943a459624ca411dab7bb">More...</a><br /></td></tr>
 <tr class="separator:a9ff571e32a2943a459624ca411dab7bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a50ad9e2c6d71a03462a4ecfd0be263c2"><td class="memItemLeft" align="right" valign="top">uint8_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lib__graphics_8h.html#a50ad9e2c6d71a03462a4ecfd0be263c2">Bitmap_GetCurrentColor</a> (<a class="el" href="struct_bitmap.html">Bitmap</a> *the_bitmap)</td></tr>
 <tr class="memdesc:a50ad9e2c6d71a03462a4ecfd0be263c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the current color of the pen.  <a href="lib__graphics_8h.html#a50ad9e2c6d71a03462a4ecfd0be263c2">More...</a><br /></td></tr>
@@ -179,13 +181,11 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>Bitmap_SetCurrentC
 <tr class="memitem:a757bd86bd28bdf0bcaa04044f11d4eaa"><td class="memItemLeft" align="right" valign="top">signed int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lib__graphics_8h.html#a757bd86bd28bdf0bcaa04044f11d4eaa">Bitmap_GetCurrentY</a> (<a class="el" href="struct_bitmap.html">Bitmap</a> *the_bitmap)</td></tr>
 <tr class="memdesc:a757bd86bd28bdf0bcaa04044f11d4eaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the current Y position of the pen.  <a href="lib__graphics_8h.html#a757bd86bd28bdf0bcaa04044f11d4eaa">More...</a><br /></td></tr>
 <tr class="separator:a757bd86bd28bdf0bcaa04044f11d4eaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abd13646680782dd510ed4fc1b5c165f0"><td class="memItemLeft" align="right" valign="top"><a id="abd13646680782dd510ed4fc1b5c165f0" name="abd13646680782dd510ed4fc1b5c165f0"></a>
-unsigned char *&#160;</td><td class="memItemRight" valign="bottom"><b>Bitmap_GetMemLocForXY</b> (<a class="el" href="struct_bitmap.html">Bitmap</a> *the_bitmap, signed int x, signed int y)</td></tr>
-<tr class="memdesc:abd13646680782dd510ed4fc1b5c165f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the VRAM location of the specified coordinate within the bitmap. <br /></td></tr>
+<tr class="memitem:abd13646680782dd510ed4fc1b5c165f0"><td class="memItemLeft" align="right" valign="top">unsigned char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lib__graphics_8h.html#abd13646680782dd510ed4fc1b5c165f0">Bitmap_GetMemLocForXY</a> (<a class="el" href="struct_bitmap.html">Bitmap</a> *the_bitmap, signed int x, signed int y)</td></tr>
+<tr class="memdesc:abd13646680782dd510ed4fc1b5c165f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the VRAM location of the specified coordinate within the bitmap.  <a href="lib__graphics_8h.html#abd13646680782dd510ed4fc1b5c165f0">More...</a><br /></td></tr>
 <tr class="separator:abd13646680782dd510ed4fc1b5c165f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a33cf6227636055e9595db68c4817e773"><td class="memItemLeft" align="right" valign="top"><a id="a33cf6227636055e9595db68c4817e773" name="a33cf6227636055e9595db68c4817e773"></a>
-unsigned char *&#160;</td><td class="memItemRight" valign="bottom"><b>Bitmap_GetCurrentMemLoc</b> (<a class="el" href="struct_bitmap.html">Bitmap</a> *the_bitmap)</td></tr>
-<tr class="memdesc:a33cf6227636055e9595db68c4817e773"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the VRAM location of the current coordinate within the bitmap. <br /></td></tr>
+<tr class="memitem:a33cf6227636055e9595db68c4817e773"><td class="memItemLeft" align="right" valign="top">unsigned char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lib__graphics_8h.html#a33cf6227636055e9595db68c4817e773">Bitmap_GetCurrentMemLoc</a> (<a class="el" href="struct_bitmap.html">Bitmap</a> *the_bitmap)</td></tr>
+<tr class="memdesc:a33cf6227636055e9595db68c4817e773"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate the VRAM location of the current coordinate within the bitmap.  <a href="lib__graphics_8h.html#a33cf6227636055e9595db68c4817e773">More...</a><br /></td></tr>
 <tr class="separator:a33cf6227636055e9595db68c4817e773"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afa64939d4229f1448f404bf07698ae11"><td class="memItemLeft" align="right" valign="top">boolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="lib__graphics_8h.html#afa64939d4229f1448f404bf07698ae11">Graphics_SetPixelAtXY</a> (Screen *the_screen, signed int x, signed int y, unsigned char the_color)</td></tr>
 <tr class="memdesc:afa64939d4229f1448f404bf07698ae11"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set a char at a specified x, y coord.  <a href="lib__graphics_8h.html#afa64939d4229f1448f404bf07698ae11">More...</a><br /></td></tr>
@@ -241,7 +241,40 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>Graphics_SetModeGr
 </div><div class="memdoc">
 
 <p>Get the current color of the pen. </p>
-<dl class="section return"><dt>Returns</dt><dd>returns 0 on any error </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">the_bitmap</td><td>reference to a valid <a class="el" href="struct_bitmap.html">Bitmap</a> object. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns a 1-byte index to the current LUT, or 0 on any error </dd></dl>
+
+</div>
+</div>
+<a id="a33cf6227636055e9595db68c4817e773" name="a33cf6227636055e9595db68c4817e773"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a33cf6227636055e9595db68c4817e773">&#9670;&nbsp;</a></span>Bitmap_GetCurrentMemLoc()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned char * Bitmap_GetCurrentMemLoc </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="struct_bitmap.html">Bitmap</a> *&#160;</td>
+          <td class="paramname"><em>the_bitmap</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Calculate the VRAM location of the current coordinate within the bitmap. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">the_bitmap</td><td>reference to a valid <a class="el" href="struct_bitmap.html">Bitmap</a> object. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns a pointer to the VRAM location that corresponds to the current "pen" X, Y, or NULL on any error condition </dd></dl>
 
 </div>
 </div>
@@ -262,7 +295,13 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>Graphics_SetModeGr
 </div><div class="memdoc">
 
 <p>Get the current X position of the pen. </p>
-<dl class="section return"><dt>Returns</dt><dd>returns -1 on any error </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">the_bitmap</td><td>reference to a valid <a class="el" href="struct_bitmap.html">Bitmap</a> object. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns -1 on any error </dd></dl>
 
 </div>
 </div>
@@ -283,7 +322,134 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>Graphics_SetModeGr
 </div><div class="memdoc">
 
 <p>Get the current Y position of the pen. </p>
-<dl class="section return"><dt>Returns</dt><dd>returns -1 on any error </dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">the_bitmap</td><td>reference to a valid <a class="el" href="struct_bitmap.html">Bitmap</a> object. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns -1 on any error </dd></dl>
+
+</div>
+</div>
+<a id="abd13646680782dd510ed4fc1b5c165f0" name="abd13646680782dd510ed4fc1b5c165f0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abd13646680782dd510ed4fc1b5c165f0">&#9670;&nbsp;</a></span>Bitmap_GetMemLocForXY()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned char * Bitmap_GetMemLocForXY </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="struct_bitmap.html">Bitmap</a> *&#160;</td>
+          <td class="paramname"><em>the_bitmap</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">signed int&#160;</td>
+          <td class="paramname"><em>x</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">signed int&#160;</td>
+          <td class="paramname"><em>y</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Calculate the VRAM location of the specified coordinate within the bitmap. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">the_bitmap</td><td>reference to a valid <a class="el" href="struct_bitmap.html">Bitmap</a> object. </td></tr>
+    <tr><td class="paramname">x</td><td>the horizontal position, between 0 and bitmap width - 1 </td></tr>
+    <tr><td class="paramname">y</td><td>the vertical position, between 0 and bitmap height - 1 </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns a pointer to the VRAM location that corresponds to the passed X, Y, or NULL on any error condition </dd></dl>
+
+</div>
+</div>
+<a id="a96fe03d99b26758d74e34d2d900bdf1f" name="a96fe03d99b26758d74e34d2d900bdf1f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a96fe03d99b26758d74e34d2d900bdf1f">&#9670;&nbsp;</a></span>Bitmap_SetCurrentColor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean Bitmap_SetCurrentColor </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="struct_bitmap.html">Bitmap</a> *&#160;</td>
+          <td class="paramname"><em>the_bitmap</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">uint8_t&#160;</td>
+          <td class="paramname"><em>the_color</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the "pen" color This is the color that the next pen-based graphics function will use This only affects functions that use the pen: any graphics function that specifies a color will use that instead. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">the_bitmap</td><td>reference to a valid <a class="el" href="struct_bitmap.html">Bitmap</a> object. </td></tr>
+    <tr><td class="paramname">the_color</td><td>a 1-byte index to the current LUT </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns false on any error condition </dd></dl>
+
+</div>
+</div>
+<a id="adff678160a0620f955de89d76dc4c367" name="adff678160a0620f955de89d76dc4c367"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adff678160a0620f955de89d76dc4c367">&#9670;&nbsp;</a></span>Bitmap_SetCurrentFont()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">boolean Bitmap_SetCurrentFont </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="struct_bitmap.html">Bitmap</a> *&#160;</td>
+          <td class="paramname"><em>the_bitmap</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">Font *&#160;</td>
+          <td class="paramname"><em>the_font</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the font This is the font that will be used for all font drawing in this bitmap. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">the_bitmap</td><td>reference to a valid <a class="el" href="struct_bitmap.html">Bitmap</a> object. </td></tr>
+    <tr><td class="paramname">the_font</td><td>reference to a complete, loaded Font object. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns false on any error condition </dd></dl>
 
 </div>
 </div>
@@ -319,9 +485,16 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>Graphics_SetModeGr
       </table>
 </div><div class="memdoc">
 
-<p>Set the "pen" position This is the location that the next pen-based graphics function will use for a starting location This only affects functions that use the pen: any graphics function that specifies an X, Y coordinate will use that instead. </p>
-<p >Set the "pen" position This is the location that the next pen-based graphics function will use for a starting location This only affects functions that use the pen: any graphics function that specifies an X, Y coordinate will use that instead.</p>
-<p >This is to allow for functions that may have portions visible on the screen, such as a row of text that starts 2 pixels to the left of the bitmap's left edge. This only affects functions that use the pen: any graphics function that specifies an X, Y coordinate will use that instead </p>
+<p>Set the "pen" position This is the location that the next pen-based graphics function will use for a starting location NOTE: you are allowed to set negative values, but not values greater than the height/width of the screen. </p>
+<p >This is to allow for functions that may have portions visible on the screen, such as a row of text that starts 2 pixels to the left of the bitmap's left edge. This only affects functions that use the pen: any graphics function that specifies an X, Y coordinate will use that instead </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">the_bitmap</td><td>reference to a valid <a class="el" href="struct_bitmap.html">Bitmap</a> object. </td></tr>
+    <tr><td class="paramname">x</td><td>the horizontal position, between 0 and bitmap width - 1 </td></tr>
+    <tr><td class="paramname">y</td><td>the vertical position, between 0 and bitmap height - 1 </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Returns false on any error condition </dd></dl>
 
 </div>
 </div>
@@ -878,6 +1051,13 @@ boolean&#160;</td><td class="memItemRight" valign="bottom"><b>Graphics_SetModeGr
         </tr>
       </table>
 </div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>returns false on any error/invalid input.</dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">the_color</td><td>a 1-byte index to the current LUT </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section return"><dt>Returns</dt><dd>returns false on any error/invalid input. </dd></dl>
 
 </div>

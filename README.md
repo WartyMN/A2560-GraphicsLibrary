@@ -1,6 +1,6 @@
 @mainpage Foenix A2560 Graphics Library
 # A2560-GraphicsLibrary
-This is a simple C library providing basic functions for the A2560's graphics mode
+This is a static C library providing basic functions for the Foenix A2560's graphics mode
 
 ## What's an A2560?
 The A2560 is a newly recreated retro computer based around a Motorolla 680x0. It is not a new Amiga, Atari ST, Mac, NeXT: it is a new thing, designed for hobbyist users who want to experience coding and using the "simpler" computers of the late 1980s/early 1990s. It is part of a family of computers that share much of the same architecture. Predecessors include the C256 Foenix, running a 65816 (fast) 8-bit processor. 
