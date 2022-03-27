@@ -27,6 +27,7 @@
 #include <mb/a2560_platform.h>
 #include <mb/lib_general.h>
 #include <mb/lib_text.h>
+#include <mb/lib_sys.h>
 
 
 /*****************************************************************************/
@@ -53,22 +54,23 @@
 
 //! \cond PRIVATE
 
-// validate screen id, x, y, and colors
-boolean Graphics_ValidateAll(Screen* the_screen, signed int x, signed int y);
-
 // validate the coordinates are within the bounds of the specified screen
-boolean Graphics_ValidateXY(Screen* the_screen, signed int x, signed int y);
+boolean Graphics_ValidateXY(Bitmap* the_bitmap, signed int x, signed int y);
 
 // calculate the VRAM location of the specified coordinate
-char* Graphics_GetMemLocForXY(Screen* the_screen, signed int x, signed int y);
+unsigned char* Graphics_GetMemLocForXY(Bitmap* the_bitmap, signed int x, signed int y);
 
 //! Draw 1 to 4 quadrants of a circle
 //! Only the specified quadrants will be drawn. This makes it possible to use this to make round rects, by only passing 1 quadrant.
 //! Based on http://rosettacode.org/wiki/Bitmap/Midpoint_circle_algorithm#C
-boolean Graphics_DrawCircleQuadrants(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_color, boolean ne, boolean se, boolean sw, boolean nw);
+boolean Graphics_DrawCircleQuadrants(Bitmap* the_bitmap, signed int x1, signed int y1, signed int radius, unsigned char the_color, boolean ne, boolean se, boolean sw, boolean nw);
 
 //! Perform a flood fill starting at the coordinate passed. 
-boolean Graphics_Fill(Screen* the_screen, signed int x, signed int y, unsigned char the_color);
+boolean Graphics_Fill(Bitmap* the_bitmap, signed int x, signed int y, unsigned char the_color);
+
+// **** Debug functions *****
+
+void Bitmap_Print(Bitmap* the_bitmap);
 
 //! \endcond
 
@@ -83,35 +85,14 @@ boolean Graphics_Fill(Screen* the_screen, signed int x, signed int y, unsigned c
 
 //! \cond PRIVATE
 
-//! Validate screen id, x, y, and colors
-//! @param	fore_color: Index to the desired foreground color (0-15). The predefined macro constants may be used (COLOR_DK_RED, etc.), but be aware that the colors are not fixed, and may not correspond to the names if the LUT in RAM has been modified.
-//! @param	back_color: Index to the desired background color (0-15). The predefined macro constants may be used (COLOR_DK_RED, etc.), but be aware that the colors are not fixed, and may not correspond to the names if the LUT in RAM has been modified.
-//! @return	returns false on any error/invalid input.
-boolean Graphics_ValidateAll(Screen* the_screen, signed int x, signed int y)
-{
-	if (the_screen == NULL)
-	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
-		return false;
-	}
-			
-	if (Graphics_ValidateXY(the_screen, x, y) == false)
-	{
-		LOG_ERR(("%s %d: illegal coordinates %li, %li", __func__, __LINE__, x, y));
-		return false;
-	}
-
-	return true;
-}
-
-//! Validate the coordinates are within the bounds of the specified screen. 
-boolean Graphics_ValidateXY(Screen* the_screen, signed int x, signed int y)
+//! Validate the coordinates are within the bounds of the specified bitmap. 
+boolean Graphics_ValidateXY(Bitmap* the_bitmap, signed int x, signed int y)
 {
 	signed int		max_row;
 	signed int		max_col;
 	
-	max_col = the_screen->width_ - 1;
-	max_row = the_screen->height_ - 1;
+	max_col = the_bitmap->width_ - 1;
+	max_row = the_bitmap->height_ - 1;
 	
 	if (x < 0 || x > max_col || y < 0 || y > max_row)
 	{
@@ -123,9 +104,9 @@ boolean Graphics_ValidateXY(Screen* the_screen, signed int x, signed int y)
 
 
 //! Calculate the VRAM location of the specified coordinate
-char* Graphics_GetMemLocForXY(Screen* the_screen, signed int x, signed int y)
+unsigned char* Graphics_GetMemLocForXY(Bitmap* the_bitmap, signed int x, signed int y)
 {
-	char*			the_write_loc;
+	unsigned char*	the_write_loc;
 	unsigned long	vram0_abs_addr;
 	unsigned long	vram0_vicky_addr;	// address from point of view of the vicky. what is stored in V 0x0104
 	
@@ -134,13 +115,15 @@ char* Graphics_GetMemLocForXY(Screen* the_screen, signed int x, signed int y)
 	//   The Vicky knows the VRAM addr as a relative location to the place the VRAM exists in the system memory map
 	//   VRAM buffer A starts at 0x00B0 0000
 	//   If vicky bitmap layer 0 addr says "0", that's 0x00B0 0000. Any other value, add to that starting address.
+
+	// next 3 lines are old Screen-based code. leaving for reference.	
+// 	vram0_vicky_addr = R32(the_screen->vicky_ + BITMAP_L0_VRAM_ADDR_L);
+// 	vram0_abs_addr = vram0_vicky_addr + VRAM_BUFFER_A;
+// 	the_write_loc = (unsigned char*)vram0_abs_addr + (the_screen->width_ * y) + x;
+
+	the_write_loc = (unsigned char*)the_bitmap->addr_ + (the_bitmap->width_ * y) + x;
 	
-	vram0_vicky_addr = R32(the_screen->vicky_ + BITMAP_L0_VRAM_ADDR_L);
-	vram0_abs_addr = vram0_vicky_addr + VRAM_BUFFER_A;
-	
-	the_write_loc = (char*)vram0_abs_addr + (the_screen->width_ * y) + x;
-	
-	//DEBUG_OUT(("%s %d: screen=%i, x=%i, y=%i, for-attr=%i, calc=%i, loc=%p", __func__, __LINE__, (signed int)the_screen_id, x, y, for_attr, (the_screen->text_mem_cols_ * y) + x, the_write_loc));
+	//DEBUG_OUT(("%s %d: the_bitmap=%p, the_bitmap addr=%p, x=%i, y=%i, loc=%p", __func__, __LINE__, the_bitmap, the_bitmap->addr_, x, y, the_write_loc));
 	
 	return the_write_loc;
 }
@@ -150,7 +133,7 @@ char* Graphics_GetMemLocForXY(Screen* the_screen, signed int x, signed int y)
 //! Only the specified quadrants will be drawn. This makes it possible to use this to make round rects, by only passing 1 quadrant.
 //! NO VALIDATION PERFORMEND ON PARAMETERS. CALLING METHOD MUST VALIDATE.
 //! Based on http://rosettacode.org/wiki/Bitmap/Midpoint_circle_algorithm#C
-boolean Graphics_DrawCircleQuadrants(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_color, boolean ne, boolean se, boolean sw, boolean nw)
+boolean Graphics_DrawCircleQuadrants(Bitmap* the_bitmap, signed int x1, signed int y1, signed int radius, unsigned char the_color, boolean ne, boolean se, boolean sw, boolean nw)
 {
     int	f;
     int	ddF_x;
@@ -166,19 +149,19 @@ boolean Graphics_DrawCircleQuadrants(Screen* the_screen, signed int x1, signed i
 
 	if (se || sw)
 	{
-		Graphics_SetPixelAtXY(the_screen, x1, y1 + radius, the_color);
+		Graphics_SetPixelAtXY(the_bitmap, x1, y1 + radius, the_color);
 	}
 	if (ne || nw)
 	{
-		Graphics_SetPixelAtXY(the_screen, x1, y1 - radius, the_color);
+		Graphics_SetPixelAtXY(the_bitmap, x1, y1 - radius, the_color);
 	}
 	if (se || ne)
 	{
-		Graphics_SetPixelAtXY(the_screen, x1 + radius, y1, the_color);
+		Graphics_SetPixelAtXY(the_bitmap, x1 + radius, y1, the_color);
 	}
 	if (nw || sw)
 	{
-		Graphics_SetPixelAtXY(the_screen, x1 - radius, y1, the_color);
+		Graphics_SetPixelAtXY(the_bitmap, x1 - radius, y1, the_color);
 	}
  
     while(x < y) 
@@ -196,26 +179,26 @@ boolean Graphics_DrawCircleQuadrants(Screen* the_screen, signed int x1, signed i
  
  		if (se)
         {
-			Graphics_SetPixelAtXY(the_screen, x1 + x, y1 + y, the_color);
-			Graphics_SetPixelAtXY(the_screen, x1 + y, y1 + x, the_color);
+			Graphics_SetPixelAtXY(the_bitmap, x1 + x, y1 + y, the_color);
+			Graphics_SetPixelAtXY(the_bitmap, x1 + y, y1 + x, the_color);
         }
  
  		if (sw)
         {
-			Graphics_SetPixelAtXY(the_screen, x1 - x, y1 + y, the_color);
-			Graphics_SetPixelAtXY(the_screen, x1 - y, y1 + x, the_color);
+			Graphics_SetPixelAtXY(the_bitmap, x1 - x, y1 + y, the_color);
+			Graphics_SetPixelAtXY(the_bitmap, x1 - y, y1 + x, the_color);
         }
  
  		if (ne)
         {
-			Graphics_SetPixelAtXY(the_screen, x1 + x, y1 - y, the_color);
-			Graphics_SetPixelAtXY(the_screen, x1 + y, y1 - x, the_color);
+			Graphics_SetPixelAtXY(the_bitmap, x1 + x, y1 - y, the_color);
+			Graphics_SetPixelAtXY(the_bitmap, x1 + y, y1 - x, the_color);
         }
  
  		if (nw)
         {
-			Graphics_SetPixelAtXY(the_screen, x1 - x, y1 - y, the_color);
-			Graphics_SetPixelAtXY(the_screen, x1 - y, y1 - x, the_color);
+			Graphics_SetPixelAtXY(the_bitmap, x1 - x, y1 - y, the_color);
+			Graphics_SetPixelAtXY(the_bitmap, x1 - y, y1 - x, the_color);
         }
     }
     
@@ -226,26 +209,26 @@ boolean Graphics_DrawCircleQuadrants(Screen* the_screen, signed int x1, signed i
 //! Perform a flood fill starting at the coordinate passed. 
 //! WARNING: this function is recursive, and if applied to a size even 1/10th the size of the screen, it can eat the stack. Either do not use this, or control its usage to just situations you can control. Or set an enormous stack size when building your app.
 //! @param	the_color: a 1-byte index to the current LUT
-boolean Graphics_Fill(Screen* the_screen, signed int x, signed int y, unsigned char the_color)
+boolean Graphics_Fill(Bitmap* the_bitmap, signed int x, signed int y, unsigned char the_color)
 {   
 	int		height;
 	int		width;
 	unsigned char	color_here;
 	
-	width = the_screen->width_;
-	height = the_screen->height_;
+	width = the_bitmap->width_;
+	height = the_bitmap->height_;
 
-//	color_here = Graphics_GetPixelAtXY(the_screen, x, y);
+//	color_here = Graphics_GetPixelAtXY(the_bitmap, x, y);
 	
 // 	DEBUG_OUT(("%s %d: x=%i, y=%i, the_color=%i, value-at-spot=%i", __func__, __LINE__, x, y, the_color, color_here));
 	
-    if ( 0 <= y && y < height && 0 <= x && x < width && Graphics_GetPixelAtXY(the_screen, x, y) != the_color )
+    if ( 0 <= y && y < height && 0 <= x && x < width && Graphics_GetPixelAtXY(the_bitmap, x, y) != the_color )
     {
-        Graphics_SetPixelAtXY(the_screen, x, y, the_color);
-        Graphics_Fill(the_screen, x-1, y, the_color);
-        Graphics_Fill(the_screen, x+1, y, the_color);
-        Graphics_Fill(the_screen, x, y-1, the_color);
-        Graphics_Fill(the_screen, x, y+1, the_color);
+        Graphics_SetPixelAtXY(the_bitmap, x, y, the_color);
+        Graphics_Fill(the_bitmap, x-1, y, the_color);
+        Graphics_Fill(the_bitmap, x+1, y, the_color);
+        Graphics_Fill(the_bitmap, x, y-1, the_color);
+        Graphics_Fill(the_bitmap, x, y+1, the_color);
     }
 //     else
 //     {
@@ -257,6 +240,23 @@ boolean Graphics_Fill(Screen* the_screen, signed int x, signed int y, unsigned c
 }
 
 
+
+// **** Debug functions *****
+
+void Bitmap_Print(Bitmap* the_bitmap)
+{
+	DEBUG_OUT(("Bitmap print out:"));
+	DEBUG_OUT(("  address: %p",			the_bitmap));
+	DEBUG_OUT(("  width_: %i",			the_bitmap->width_));	
+	DEBUG_OUT(("  height_: %i",			the_bitmap->height_));	
+	DEBUG_OUT(("  x_: %i",				the_bitmap->x_));	
+	DEBUG_OUT(("  y_: %i",				the_bitmap->y_));	
+	DEBUG_OUT(("  color_: %u",			the_bitmap->color_));	
+	DEBUG_OUT(("  reserved_: %u",		the_bitmap->reserved_));	
+	DEBUG_OUT(("  font_: %p",			the_bitmap->font_));	
+	DEBUG_OUT(("  addr_: %p",			the_bitmap->addr_));
+}
+
 //! \endcond
 
 
@@ -265,7 +265,106 @@ boolean Graphics_Fill(Screen* the_screen, signed int x, signed int y, unsigned c
 /*                        Public Function Definitions                        */
 /*****************************************************************************/
 
-// ** NOTE: there is no destructor or constructor for this library, as it does not track any allocated memory. It works on the basis of a screen ID, which corresponds to the text memory for Vicky's Channel A and Channel B video memory.
+// **** CONSTRUCTOR AND DESTRUCTOR *****
+
+// constructor
+
+//! Create a new bitmap object by allocating space for the bitmap struct in regular memory, and for the graphics, in VRAM
+//! @param	Font: optional font object to associate with the Bitmap. 
+Bitmap* Bitmap_New(signed int width, signed int height, Font* the_font)
+{
+	Bitmap*		the_bitmap;
+
+	DEBUG_OUT(("%s %d: start bitmap creation... (%i, %i, %p)", __func__, __LINE__, width, height, the_font));
+
+	// check width/height for some maximum??
+	// TODO
+	if ( (width < 2 || width > 2000) || (height < 2 || height > 2000) )
+	{
+		LOG_ERR(("%s %d: Illegal width (%i) and/or height (%i)", __func__, __LINE__, width, height));
+		goto error;
+	}
+
+	DEBUG_OUT(("%s %d: allocating struct in normal memory...", __func__, __LINE__));
+	
+	// LOGIC:
+	//   we have 2 kinds of memory: VRAM and standard RAM
+	//   A bitmap object needs a struct which can and should be allocated in normal memory
+	//   It also needs the actual bytes for the bitmap, which must be allocated in VRAM
+	
+	// NOTE: MEM_STANDARD allocations are failing for some reason. until figure it out, allocate everything in VRAM.
+	//if ((the_bitmap = f_calloc(1, sizeof(Bitmap), MEM_STANDARD)) == NULL)
+	if ((the_bitmap = f_calloc(1, sizeof(Bitmap), MEM_VRAM)) == NULL)
+	{
+		LOG_ERR(("%s %d: Couldn't allocate space for bitmap struc", __func__, __LINE__));
+		goto error;
+	}
+
+	DEBUG_OUT(("%s %d: Allocating a screen-sized bitmap in VRAM...", __func__, __LINE__));
+
+	if ((the_bitmap->addr_ = f_calloc(sizeof(uint8_t), width * height, MEM_VRAM)) == NULL)
+	{
+		LOG_ERR(("%s %d: Couldn't instantiate a bitmap", __func__, __LINE__));
+		goto error;
+	}
+
+	the_bitmap->width_ = width;
+	the_bitmap->height_ = height;
+	
+	DEBUG_OUT(("%s %d: Bitmap allocated! p=%p, addr=%p", __func__, __LINE__, the_bitmap, the_bitmap->addr_));
+
+	if (the_font)
+	{
+		if (Bitmap_SetCurrentFont(the_bitmap, the_font) == false)
+		{
+			LOG_ERR(("%s %d: Couldn't assign the font to the bitmap", __func__, __LINE__));
+			goto error;
+		}
+	}
+		
+	Bitmap_Print(the_bitmap);
+	
+	return the_bitmap;
+	
+error:
+	return NULL;
+}
+
+// destructor
+// frees all allocated memory associated with the passed object, and the object itself
+boolean Bitmap_Destroy(Bitmap** the_bitmap)
+{
+	if (*the_bitmap == NULL)
+	{
+		LOG_ERR(("%s %d: passed class object was null", __func__ , __LINE__));
+		return false;
+	}
+
+	// LOGIC: 
+	//   Bitmaps optionally have fonts associated with them.
+	//   We do not want to destroy these, because other objects could be using them.
+	//   TODO: notify the system that we are no longer using this font (system needs to be tallying usage count for that to work)
+	
+	if ((*the_bitmap)->font_)
+	{
+		(*the_bitmap)->font_ = NULL;
+	}
+
+	if ((*the_bitmap)->addr_)
+	{
+		f_free((*the_bitmap)->addr_, MEM_VRAM);
+	}
+
+	LOG_ALLOC(("%s %d:	__FREE__	*the_bitmap	%p	size	%i", __func__ , __LINE__, *the_bitmap, sizeof(Bitmap)));
+	f_free(*the_bitmap, MEM_STANDARD);
+	*the_bitmap = NULL;
+	
+	return true;
+}
+
+
+
+
 
 
 // **** Block copy functions ****
@@ -277,20 +376,14 @@ boolean Graphics_Fill(Screen* the_screen, signed int x, signed int y, unsigned c
 //! @param src_x, src_y: the upper left coordinate within the source bitmap, for the rectangle you want to copy. May be negative.
 //! @param dst_x, dst_y: the location within the destination bitmap to copy pixels to. May be negative.
 //! @param width, height: the scope of the copy, in pixels.
-boolean Graphics_BlitBitMap(Screen* the_screen, Bitmap* src_bm, int src_x, int src_y, Bitmap* dst_bm, int dst_x, int dst_y, int width, int height)
+boolean Graphics_BlitBitMap(Bitmap* src_bm, int src_x, int src_y, Bitmap* dst_bm, int dst_x, int dst_y, int width, int height)
 {
 	unsigned char*		the_read_loc;
 	unsigned char*		the_write_loc;
 	int					i;
 	
-	// TODO: move the 3 checks below to a private common function if other blit functions are added
+	// TODO: move the 2 checks below to a private common function if other blit functions are added
 	
-	if (the_screen == NULL)
-	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
-		return false;
-	}
-
 	if (src_bm == NULL || dst_bm == NULL)
 	{
 		LOG_ERR(("%s %d: passed source or destination bitmap was NULL", __func__, __LINE__));
@@ -344,7 +437,7 @@ boolean Graphics_BlitBitMap(Screen* the_screen, Bitmap* src_bm, int src_x, int s
 
 	// checks complete. ready to copy. 
 	the_read_loc = src_bm->addr_ + (src_bm->width_ * src_y) + src_x;
-	the_write_loc = dst_bm->addr_ + (src_bm->width_ * dst_y) + dst_x;
+	the_write_loc = dst_bm->addr_ + (dst_bm->width_ * dst_y) + dst_x;
 	
 	for (i = 0; i < height; i++)
 	{
@@ -365,24 +458,33 @@ boolean Graphics_BlitBitMap(Screen* the_screen, Bitmap* src_bm, int src_x, int s
 // calling function must validate the screen ID before passing!
 //! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_FillMemory(Screen* the_screen, unsigned char the_color)
+boolean Graphics_FillMemory(Bitmap* the_bitmap, unsigned char the_color)
 {
-	char*			the_write_loc;
+	unsigned char*	the_write_loc;
 	unsigned long	the_write_len;
 	
-	if (the_screen == NULL)
+	if (the_bitmap == NULL)
 	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
 		return false;
 	}
 
-	the_write_loc = Graphics_GetMemLocForXY(the_screen, 0, 0);
+	the_write_loc = Graphics_GetMemLocForXY(the_bitmap, 0, 0);
 
-	the_write_len = the_screen->width_ * the_screen->height_;
+	the_write_len = the_bitmap->width_ * the_bitmap->height_;
 	
 	memset(the_write_loc, the_color, the_write_len);
 
 	return true;
+}
+
+
+//! Fill pixel values for the passed Rectangle object, using the specified LUT value
+//! @param	the_color: a 1-byte index to the current LUT
+//! @return	returns false on any error/invalid input.
+boolean Graphics_FillBoxRect(Bitmap* the_bitmap, Rectangle* the_coords, unsigned char the_color)
+{
+	return Graphics_FillBox(the_bitmap, the_coords->MinX, the_coords->MinY, the_coords->MaxX - the_coords->MinX, the_coords->MaxY - the_coords->MinY, the_color);
 }
 
 
@@ -392,28 +494,28 @@ boolean Graphics_FillMemory(Screen* the_screen, unsigned char the_color)
 //! @param	height: height, in pixels, of the rectangle to be filled
 //! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_FillBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, unsigned char the_color)
+boolean Graphics_FillBox(Bitmap* the_bitmap, signed int x, signed int y, signed int width, signed int height, unsigned char the_color)
 {
-	char*			the_write_loc;
+	unsigned char*	the_write_loc;
 	signed int		max_row;
 
-	if (the_screen == NULL)
+	if (the_bitmap == NULL)
 	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
 		return false;
 	}
 
-	//DEBUG_OUT(("%s %d: x=%i, y=%i, width=%i, height=%i, the_color=%i", __func__, __LINE__, x, y, width, height, the_color));
+	//DEBUG_OUT(("%s %d: x=%i, y=%i, width=%i, height=%i, the_color=%i, the_bitmap=%p", __func__, __LINE__, x, y, width, height, the_color, the_bitmap));
 	
 	// set up initial loc
-	the_write_loc = Graphics_GetMemLocForXY(the_screen, x, y);
+	the_write_loc = Graphics_GetMemLocForXY(the_bitmap, x, y);
 	
 	max_row = y + height;
 	
 	for (; y <= max_row; y++)
 	{
 		memset(the_write_loc, the_color, width);
-		the_write_loc += the_screen->width_;
+		the_write_loc += the_bitmap->width_;
 	}
 			
 	return true;
@@ -596,23 +698,23 @@ unsigned char* Bitmap_GetCurrentMemLoc(Bitmap* the_bitmap)
 //! Set a char at a specified x, y coord
 //! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_SetPixelAtXY(Screen* the_screen, signed int x, signed int y, unsigned char the_color)
+boolean Graphics_SetPixelAtXY(Bitmap* the_bitmap, signed int x, signed int y, unsigned char the_color)
 {
-	char*	the_write_loc;
+	unsigned char*	the_write_loc;
 	
-	if (the_screen == NULL)
+	if (the_bitmap == NULL)
 	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
 		return false;
 	}
 
-	if (!Graphics_ValidateAll(the_screen, x, y))
+	if (!Graphics_ValidateXY(the_bitmap, x, y))
 	{
-		LOG_ERR(("%s %d: illegal screen id or coordinate", __func__, __LINE__));
+		LOG_ERR(("%s %d: illegal coordinate", __func__, __LINE__));
 		return false;
 	}
 	
-	the_write_loc = Graphics_GetMemLocForXY(the_screen, x, y);	
+	the_write_loc = Graphics_GetMemLocForXY(the_bitmap, x, y);	
  	*the_write_loc = the_color;
 	
 	return true;
@@ -626,24 +728,24 @@ boolean Graphics_SetPixelAtXY(Screen* the_screen, signed int x, signed int y, un
 
 //! Get the char at a specified x, y coord
 //! @return	returns a character code
-unsigned char Graphics_GetPixelAtXY(Screen* the_screen, signed int x, signed int y)
+unsigned char Graphics_GetPixelAtXY(Bitmap* the_bitmap, signed int x, signed int y)
 {
-	char*			the_read_loc;
+	unsigned char*	the_read_loc;
 	unsigned char	the_color;
 	
-	if (the_screen == NULL)
+	if (the_bitmap == NULL)
 	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
 		return false;
 	}
 
-	if (!Graphics_ValidateAll(the_screen, x, y))
+	if (!Graphics_ValidateXY(the_bitmap, x, y))
 	{
-		LOG_ERR(("%s %d: illegal screen id or coordinate", __func__, __LINE__));
+		LOG_ERR(("%s %d: illegal coordinate", __func__, __LINE__));
 		return false;
 	}
 	
-	the_read_loc = Graphics_GetMemLocForXY(the_screen, x, y);	
+	the_read_loc = Graphics_GetMemLocForXY(the_bitmap, x, y);	
  	the_color = (unsigned char)*the_read_loc;
 	
 	return the_color;
@@ -659,7 +761,7 @@ unsigned char Graphics_GetPixelAtXY(Screen* the_screen, signed int x, signed int
 //! Draws a line between 2 passed coordinates.
 //! Use for any line that is not perfectly vertical or perfectly horizontal
 //! Based on http://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C. Used in C128 Lich King. 
-boolean Graphics_DrawLine(Screen* the_screen, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_color)
+boolean Graphics_DrawLine(Bitmap* the_bitmap, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_color)
 {
 	signed int dx;
 	signed int sx;
@@ -668,15 +770,15 @@ boolean Graphics_DrawLine(Screen* the_screen, signed int x1, signed int y1, sign
 	signed int err;
 	signed int e2;
 
-	if (the_screen == NULL)
+	if (the_bitmap == NULL)
 	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
 		return false;
 	}
 
-	if (!Graphics_ValidateAll(the_screen, x1, y1))
+	if (!Graphics_ValidateXY(the_bitmap, x1, y1))
 	{
-		LOG_ERR(("%s %d: illegal screen id or coordinate", __func__, __LINE__));
+		LOG_ERR(("%s %d: illegal coordinate", __func__, __LINE__));
 		return false;
 	}
 	
@@ -688,7 +790,7 @@ boolean Graphics_DrawLine(Screen* the_screen, signed int x1, signed int y1, sign
 
 	for(;;)
 	{
-		Graphics_SetPixelAtXY(the_screen, x1, y1, the_color);
+		Graphics_SetPixelAtXY(the_bitmap, x1, y1, the_color);
 
 		if (x1==x2 && y1==y2)
 		{
@@ -716,7 +818,7 @@ boolean Graphics_DrawLine(Screen* the_screen, signed int x1, signed int y1, sign
 //! Draws a horizontal line from specified coords, for n pixels
 //! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawHLine(Screen* the_screen, signed int x, signed int y, signed int the_line_len, unsigned char the_color)
+boolean Graphics_DrawHLine(Bitmap* the_bitmap, signed int x, signed int y, signed int the_line_len, unsigned char the_color)
 {
 	signed int		dx;
 	unsigned char	the_attribute_value;
@@ -727,19 +829,19 @@ boolean Graphics_DrawHLine(Screen* the_screen, signed int x, signed int y, signe
 
 	//DEBUG_OUT(("%s %d: x=%i, y=%i, the_line_len=%i, the_color=%i", __func__, __LINE__, x, y, the_line_len, the_color));
 	
-	if (the_screen == NULL)
+	if (the_bitmap == NULL)
 	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
 		return false;
 	}
 
-	if (!Graphics_ValidateAll(the_screen, x, y))
+	if (!Graphics_ValidateXY(the_bitmap, x, y))
 	{
-		LOG_ERR(("%s %d: illegal screen id, coordinate, or color", __func__, __LINE__));
+		LOG_ERR(("%s %d: illegal coordinate", __func__, __LINE__));
 		return false;
 	}
 
-	result = Graphics_FillBox(the_screen, x, y, the_line_len, 0, the_color);
+	result = Graphics_FillBox(the_bitmap, x, y, the_line_len, 0, the_color);
 
 	return result;
 }
@@ -748,56 +850,65 @@ boolean Graphics_DrawHLine(Screen* the_screen, signed int x, signed int y, signe
 //! Draws a vertical line from specified coords, for n pixels
 //! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawVLine(Screen* the_screen, signed int x, signed int y, signed int the_line_len, unsigned char the_color)
+boolean Graphics_DrawVLine(Bitmap* the_bitmap, signed int x, signed int y, signed int the_line_len, unsigned char the_color)
 {
 	unsigned int dy;
 
 	//DEBUG_OUT(("%s %d: x=%i, y=%i, the_line_len=%i, the_color=%i", __func__, __LINE__, x, y, the_line_len, the_color));
 	
-	if (the_screen == NULL)
+	if (the_bitmap == NULL)
 	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
 		return false;
 	}
 
-	if (!Graphics_ValidateAll(the_screen, x, y))
+	if (!Graphics_ValidateXY(the_bitmap, x, y))
 	{
-		LOG_ERR(("%s %d: illegal screen id or coordinate", __func__, __LINE__));
+		LOG_ERR(("%s %d: illegal coordinate", __func__, __LINE__));
 		return false;
 	}
 	
 	for (dy = 0; dy < the_line_len; dy++)
 	{
-		Graphics_SetPixelAtXY(the_screen, x, y + dy, the_color);
+		Graphics_SetPixelAtXY(the_bitmap, x, y + dy, the_color);
 	}
 	
 	return true;
 }
 
 
+//! Draws a rectangle based on the passed Rectangle object, using the specified LUT value
+//! @param	the_color: a 1-byte index to the current LUT
+//! @return	returns false on any error/invalid input.
+boolean Graphics_DrawBoxRect(Bitmap* the_bitmap, Rectangle* the_coords, unsigned char the_color)
+{
+	return Graphics_DrawBoxCoords(the_bitmap, the_coords->MinX, the_coords->MinY, the_coords->MaxX, the_coords->MaxY, the_color);
+}
+
+
 //! Draws a rectangle based on 2 sets of coords, using the specified LUT value
 //! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawBoxCoords(Screen* the_screen, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_color)
+boolean Graphics_DrawBoxCoords(Bitmap* the_bitmap, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_color)
 {
 	signed int	dy;
 	signed int	dx;
 
 	//DEBUG_OUT(("%s %d: x1=%i, y1=%i, x2=%i, y2=%i, the_color=%i", __func__, __LINE__, x1, y1, x2, y2, the_color));
 	
-	if (the_screen == NULL)
+	if (the_bitmap == NULL)
 	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
 		return false;
 	}
 
-	if (!Graphics_ValidateAll(the_screen, x1, y1))
+	if (!Graphics_ValidateXY(the_bitmap, x1, y1))
 	{
-		LOG_ERR(("%s %d: illegal screen id or coordinate", __func__, __LINE__));
+		LOG_ERR(("%s %d: illegal coordinate", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_ValidateXY(the_screen, x2, y2))
+	if (!Graphics_ValidateXY(the_bitmap, x2, y2))
 	{
 		LOG_ERR(("%s %d: illegal coordinate", __func__, __LINE__));
 		return false;
@@ -813,25 +924,25 @@ boolean Graphics_DrawBoxCoords(Screen* the_screen, signed int x1, signed int y1,
 	dx = x2 - x1 + 1;
 	dy = y2 - y1 + 1;
 	
-	if (!Graphics_DrawHLine(the_screen, x1, y1, dx, the_color))
+	if (!Graphics_DrawHLine(the_bitmap, x1, y1, dx, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_DrawVLine(the_screen, x2, y1, dy, the_color))
+	if (!Graphics_DrawVLine(the_bitmap, x2, y1, dy, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_DrawHLine(the_screen, x1, y2, dx, the_color))
+	if (!Graphics_DrawHLine(the_bitmap, x1, y2, dx, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_DrawVLine(the_screen, x1, y1, dy, the_color))
+	if (!Graphics_DrawVLine(the_bitmap, x1, y1, dy, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
@@ -847,24 +958,24 @@ boolean Graphics_DrawBoxCoords(Screen* the_screen, signed int x1, signed int y1,
 //! @param	the_color: a 1-byte index to the current LUT
 //! @param	do_fill: If true, the box will be filled with the provided color. If false, the box will only draw the outline.
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, unsigned char the_color, boolean do_fill)
+boolean Graphics_DrawBox(Bitmap* the_bitmap, signed int x, signed int y, signed int width, signed int height, unsigned char the_color, boolean do_fill)
 {	
 
 	//DEBUG_OUT(("%s %d: x=%i, y=%i, width=%i, height=%i, the_color=%i", __func__, __LINE__, x, y, width, height, the_color));
 
-	if (the_screen == NULL)
+	if (the_bitmap == NULL)
 	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
 		return false;
 	}
 
-	if (!Graphics_ValidateAll(the_screen, x, y))
+	if (!Graphics_ValidateXY(the_bitmap, x, y))
 	{
-		LOG_ERR(("%s %d: illegal screen id, coordinate, or color", __func__, __LINE__));
+		LOG_ERR(("%s %d: illegal coordinate", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_ValidateXY(the_screen, x + width - 1, y + height - 1))
+	if (!Graphics_ValidateXY(the_bitmap, x + width - 1, y + height - 1))
 	{
 		LOG_ERR(("%s %d: illegal coordinates. x2=%i, y2=%i", __func__, __LINE__,  x + width - 1, y + height - 1));
 		return false;
@@ -876,7 +987,7 @@ boolean Graphics_DrawBox(Screen* the_screen, signed int x, signed int y, signed 
 	
 	if (do_fill)
 	{
-		if (!Graphics_FillBox(the_screen, x, y, width, height - 1, the_color))
+		if (!Graphics_FillBox(the_bitmap, x, y, width, height - 1, the_color))
 		{
 			LOG_ERR(("%s %d: draw filled box failed", __func__, __LINE__));
 			return false;
@@ -884,25 +995,25 @@ boolean Graphics_DrawBox(Screen* the_screen, signed int x, signed int y, signed 
 	}
 	else
 	{
-		if (!Graphics_DrawHLine(the_screen, x, y, width, the_color))
+		if (!Graphics_DrawHLine(the_bitmap, x, y, width, the_color))
 		{
 			LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 			return false;
 		}
 	
-		if (!Graphics_DrawVLine(the_screen, x + width - 1, y, height, the_color))
+		if (!Graphics_DrawVLine(the_bitmap, x + width - 1, y, height, the_color))
 		{
 			LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 			return false;
 		}
 	
-		if (!Graphics_DrawHLine(the_screen, x, y + height - 1, width, the_color))
+		if (!Graphics_DrawHLine(the_bitmap, x, y + height - 1, width, the_color))
 		{
 			LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 			return false;
 		}
 	
-		if (!Graphics_DrawVLine(the_screen, x, y, height, the_color))
+		if (!Graphics_DrawVLine(the_bitmap, x, y, height, the_color))
 		{
 			LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 			return false;
@@ -920,24 +1031,24 @@ boolean Graphics_DrawBox(Screen* the_screen, signed int x, signed int y, signed 
 //! @param	the_color: a 1-byte index to the current color LUT
 //! @param	do_fill: If true, the box will be filled with the provided color. If false, the box will only draw the outline.
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawRoundBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, signed int radius, unsigned char the_color, boolean do_fill)
+boolean Graphics_DrawRoundBox(Bitmap* the_bitmap, signed int x, signed int y, signed int width, signed int height, signed int radius, unsigned char the_color, boolean do_fill)
 {	
 
 	//DEBUG_OUT(("%s %d: x=%i, y=%i, width=%i, height=%i, the_color=%i", __func__, __LINE__, x, y, width, height, the_color));
 
-	if (the_screen == NULL)
+	if (the_bitmap == NULL)
 	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
 		return false;
 	}
 
-	if (!Graphics_ValidateAll(the_screen, x, y))
+	if (!Graphics_ValidateXY(the_bitmap, x, y))
 	{
-		LOG_ERR(("%s %d: illegal screen id, coordinate, or color", __func__, __LINE__));
+		LOG_ERR(("%s %d: illegal coordinate", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_ValidateXY(the_screen, x + width - 1, y + height - 1))
+	if (!Graphics_ValidateXY(the_bitmap, x + width - 1, y + height - 1))
 	{
 		LOG_ERR(("%s %d: illegal coordinate", __func__, __LINE__));
 		return false;
@@ -956,31 +1067,31 @@ boolean Graphics_DrawRoundBox(Screen* the_screen, signed int x, signed int y, si
 	y += radius;
 	
 	// Draw 4 circle quadrants
-	Graphics_DrawCircleQuadrants(the_screen, x, y, radius, the_color, PARAM_SKIP_NE, PARAM_SKIP_SE, PARAM_SKIP_SW, PARAM_DRAW_NW);
-	Graphics_DrawCircleQuadrants(the_screen, x + width, y, radius, the_color, PARAM_DRAW_NE, PARAM_SKIP_SE, PARAM_SKIP_SW, PARAM_SKIP_NW);
-	Graphics_DrawCircleQuadrants(the_screen, x, y + height, radius, the_color, PARAM_SKIP_NE, PARAM_SKIP_SE, PARAM_DRAW_SW, PARAM_SKIP_NW);
-	Graphics_DrawCircleQuadrants(the_screen, x + width, y + height, radius, the_color, PARAM_SKIP_NE, PARAM_DRAW_SE, PARAM_SKIP_SW, PARAM_SKIP_NW);
+	Graphics_DrawCircleQuadrants(the_bitmap, x, y, radius, the_color, PARAM_SKIP_NE, PARAM_SKIP_SE, PARAM_SKIP_SW, PARAM_DRAW_NW);
+	Graphics_DrawCircleQuadrants(the_bitmap, x + width, y, radius, the_color, PARAM_DRAW_NE, PARAM_SKIP_SE, PARAM_SKIP_SW, PARAM_SKIP_NW);
+	Graphics_DrawCircleQuadrants(the_bitmap, x, y + height, radius, the_color, PARAM_SKIP_NE, PARAM_SKIP_SE, PARAM_DRAW_SW, PARAM_SKIP_NW);
+	Graphics_DrawCircleQuadrants(the_bitmap, x + width, y + height, radius, the_color, PARAM_SKIP_NE, PARAM_DRAW_SE, PARAM_SKIP_SW, PARAM_SKIP_NW);
 	
 	// draw 4 shortened lines that will match up with the edges of the arcs
-	if (!Graphics_DrawHLine(the_screen, x, y - radius, width, the_color))
+	if (!Graphics_DrawHLine(the_bitmap, x, y - radius, width, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_DrawVLine(the_screen, x + width + radius, y, height, the_color))
+	if (!Graphics_DrawVLine(the_bitmap, x + width + radius, y, height, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_DrawHLine(the_screen, x, y + height + radius, width, the_color))
+	if (!Graphics_DrawHLine(the_bitmap, x, y + height + radius, width, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
 	}
 	
-	if (!Graphics_DrawVLine(the_screen, x - radius, y, height, the_color))
+	if (!Graphics_DrawVLine(the_bitmap, x - radius, y, height, the_color))
 	{
 		LOG_ERR(("%s %d: draw box failed", __func__, __LINE__));
 		return false;
@@ -989,13 +1100,13 @@ boolean Graphics_DrawRoundBox(Screen* the_screen, signed int x, signed int y, si
 	// fill with same color as outline, if specified
 	if (do_fill)
 	{
-		Graphics_FillBox(the_screen, x + radius, y + 1, width - radius*2, radius, the_color);
-		Graphics_FillBox(the_screen, x + 1, y + radius, width - 1, height-radius*2, the_color);
-		Graphics_FillBox(the_screen, x + radius, y + height-radius*1, width - radius*2, radius-1, the_color);
-		Graphics_Fill(the_screen, x + radius - 1, y + 1, the_color);
-		Graphics_Fill(the_screen, x + (width - radius) + 1, y + 1, the_color);
-		Graphics_Fill(the_screen, x + radius - 1, y + (height - radius) + 1, the_color);
-		Graphics_Fill(the_screen, x + (width - radius) + 1, y + (height - radius) + 1, the_color);
+		Graphics_FillBox(the_bitmap, x + radius, y + 1, width - radius*2, radius, the_color);
+		Graphics_FillBox(the_bitmap, x + 1, y + radius, width - 1, height-radius*2, the_color);
+		Graphics_FillBox(the_bitmap, x + radius, y + height-radius*1, width - radius*2, radius-1, the_color);
+		Graphics_Fill(the_bitmap, x + radius - 1, y + 1, the_color);
+		Graphics_Fill(the_bitmap, x + (width - radius) + 1, y + 1, the_color);
+		Graphics_Fill(the_bitmap, x + radius - 1, y + (height - radius) + 1, the_color);
+		Graphics_Fill(the_bitmap, x + (width - radius) + 1, y + (height - radius) + 1, the_color);
 	}
 		
 	return true;
@@ -1004,83 +1115,25 @@ boolean Graphics_DrawRoundBox(Screen* the_screen, signed int x, signed int y, si
 
 //! Draw a circle
 //! Based on http://rosettacode.org/wiki/Bitmap/Midpoint_circle_algorithm#C
-boolean Graphics_DrawCircle(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_color)
+boolean Graphics_DrawCircle(Bitmap* the_bitmap, signed int x1, signed int y1, signed int radius, unsigned char the_color)
 {
-	if (the_screen == NULL)
+	if (the_bitmap == NULL)
 	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
+		LOG_ERR(("%s %d: passed bitmap was NULL", __func__, __LINE__));
 		return false;
 	}
 
-	if (!Graphics_ValidateAll(the_screen, x1, y1))
+	if (!Graphics_ValidateXY(the_bitmap, x1, y1))
 	{
-		LOG_ERR(("%s %d: illegal screen id, coordinate, or color", __func__, __LINE__));
+		LOG_ERR(("%s %d: illegal coordinate", __func__, __LINE__));
 		return false;
 	}
 
-	return Graphics_DrawCircleQuadrants(the_screen, x1, y1, radius, the_color, PARAM_DRAW_NE, PARAM_DRAW_SE, PARAM_DRAW_SW, PARAM_DRAW_NW);
+	return Graphics_DrawCircleQuadrants(the_bitmap, x1, y1, radius, the_color, PARAM_DRAW_NE, PARAM_DRAW_SE, PARAM_DRAW_SW, PARAM_DRAW_NW);
 }
 
 
 // **** Draw string functions *****
 
-
-
-
-
-// **** Screen mode/resolution/size functions *****
-
-
-//! Switch machine into graphics mode
-boolean Graphics_SetModeGraphics(Screen* the_screen)
-{	
-	if (the_screen == NULL)
-	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
-		return false;
-	}
-	
-	// switch to graphics mode by setting graphics mode bit, and setting bitmap engine enable bit
-	//*the_screen->vicky_ = (*the_screen->vicky_ & GRAPHICS_MODE_MASK | (GRAPHICS_MODE_GRAPHICS) | GRAPHICS_MODE_EN_BITMAP);
-	R32(the_screen->vicky_) = (*the_screen->vicky_ & GRAPHICS_MODE_MASK | (GRAPHICS_MODE_GRAPHICS) | GRAPHICS_MODE_EN_BITMAP);
-
-	// enable bitmap layer0
-	R32(the_screen->vicky_ + BITMAP_L0_CTRL_L) = 0x01;
-}
-
-
-//! Switch machine into text mode
-//! @param as_overlay: If true, sets text overlay mode (text over graphics). If false, sets full text mode (no graphics);
-boolean Graphics_SetModeText(Screen* the_screen, boolean as_overlay)
-{	
-	if (the_screen == NULL)
-	{
-		LOG_ERR(("%s %d: passed screen was NULL", __func__, __LINE__));
-		return false;
-	}
-	
-	// switch to yrcy mode by unsetting graphics mode bit, and setting bitmap engine enable bit
-	//*the_screen->vicky_ = (*the_screen->vicky_ & GRAPHICS_MODE_MASK | (GRAPHICS_MODE_GRAPHICS) | GRAPHICS_MODE_EN_BITMAP);
-	if (as_overlay)
-	{
-		R32(the_screen->vicky_) = (*the_screen->vicky_ & GRAPHICS_MODE_MASK | GRAPHICS_MODE_TEXT | GRAPHICS_MODE_TEXT_OVER | GRAPHICS_MODE_GRAPHICS | GRAPHICS_MODE_EN_BITMAP);
-		
-		// c256foenix, discord 2022/03/10
-		// Normally, for example, if you setup everything to be in bitmap mode, and you download an image in VRAM and you can see it properly... If you turn on overlay, then you will see on top of that same image, your text that you had before.
-		// Mstr_Ctrl_Text_Mode_En  = $01       ; Enable the Text Mode
-		// Mstr_Ctrl_Text_Overlay  = $02       ; Enable the Overlay of the text mode on top of Graphic Mode (the Background Color is ignored)
-		// Mstr_Ctrl_Graph_Mode_En = $04       ; Enable the Graphic Mode
-		// Mstr_Ctrl_Bitmap_En     = $08       ; Enable the Bitmap Module In Vicky
-		// all of these should be ON
-	}
-	else
-	{
-		R32(the_screen->vicky_) = (*the_screen->vicky_ & GRAPHICS_MODE_MASK | GRAPHICS_MODE_TEXT);
-		
-		// disable bitmap layer0
-		R32(the_screen->vicky_ + BITMAP_L0_CTRL_L) = 0x00;
-	}
-
-}
 
 

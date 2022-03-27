@@ -29,6 +29,7 @@
 #include <mb/a2560_platform.h>
 #include <mb/lib_general.h>
 #include <mb/lib_text.h>
+#include <mb/lib_sys.h>
 
 
 
@@ -48,7 +49,7 @@
 /*                             Global Variables                              */
 /*****************************************************************************/
 
-Screen	global_screen[2];
+extern System*			global_system;
 
 
 
@@ -153,34 +154,23 @@ MU_TEST_SUITE(text_test_suite_units)
 
 int main(int argc, char* argv[])
 {
-
-	// find out what kind of machine the software is running on, and configure global screens accordingly
-	global_screen[ID_CHANNEL_A].id_ = ID_CHANNEL_A;
-	global_screen[ID_CHANNEL_B].id_ = ID_CHANNEL_B;
-
-	if (Text_AutoConfigureScreen(&global_screen[ID_CHANNEL_A]) == false)
+	if ( Sys_InitSystem() == false)
 	{
-		DEBUG_OUT(("%s %d: Auto configure failed for screen A", __func__, __LINE__));
-		exit(0);
-	}
-	
-	if (Text_AutoConfigureScreen(&global_screen[ID_CHANNEL_B]) == false)
-	{
-		DEBUG_OUT(("%s %d: Auto configure failed for screen B", __func__, __LINE__));
+		DEBUG_OUT(("%s %d: Couldn't initialize the system", __func__, __LINE__));
 		exit(0);
 	}
 	
 	printf("Hiya from graphic world.");
 	
-	Graphics_SetModeGraphics(&global_screen[ID_CHANNEL_B]);
+	Sys_SetModeGraphics(global_system);
 	printf("now in graphics mode");
 	getchar();
-	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], 1, 4, (char*)"graphics mode?", FG_COLOR_YELLOW, BG_COLOR_BLACK);
-	Graphics_SetModeText(&global_screen[ID_CHANNEL_B], false);
+	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], 1, 4, (char*)"graphics mode?", FG_COLOR_YELLOW, BG_COLOR_BLACK);
+	Sys_SetModeText(global_system, false);
 	printf("now in normal text mode");
 	getchar();
-	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], 1, 4, (char*)"overlay mode??", FG_COLOR_YELLOW, BG_COLOR_BLACK);
-	Graphics_SetModeText(&global_screen[ID_CHANNEL_B], true);
+	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], 1, 4, (char*)"overlay mode??", FG_COLOR_YELLOW, BG_COLOR_BLACK);
+	Sys_SetModeText(global_system, true);
 	printf("now in overlay text mode");
 
 	

@@ -29,6 +29,7 @@
 #include <mb/lib_general.h>
 #include <mb/lib_text.h>
 #include <mb/lib_graphics.h>
+#include <mb/lib_sys.h>
 
 
 /*****************************************************************************/
@@ -41,7 +42,8 @@
 /*                             Global Variables                              */
 /*****************************************************************************/
 
-Screen	global_screen[2];
+extern System*			global_system;
+
 
 /*****************************************************************************/
 /*                       Private Function Prototypes                         */
@@ -86,35 +88,35 @@ void Demo_Graphics_ScreenResolution2(void);
 // have user hit a key, then clear screens
 void WaitForUser(void)
 {
-	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], 1, 4, (char*)"Press any key to continue", FG_COLOR_YELLOW, BG_COLOR_DK_BLUE);
+	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], 1, 4, (char*)"Press any key to continue", FG_COLOR_YELLOW, BG_COLOR_DK_BLUE);
 	
 	getchar();
 	
-	Graphics_FillMemory(&global_screen[ID_CHANNEL_B], 0xbb);
-	Text_FillCharMem(&global_screen[ID_CHANNEL_B], ' ');
-	Text_FillAttrMem(&global_screen[ID_CHANNEL_B], 0);
+	Graphics_FillMemory(global_system->screen_[ID_CHANNEL_B]->bitmap_, 0xbb);
+	Text_FillCharMem(global_system->screen_[ID_CHANNEL_B], ' ');
+	Text_FillAttrMem(global_system->screen_[ID_CHANNEL_B], 0);
 }
 
 // Draw fancy box on the B screen and display demo description
 void ShowDescription(char* the_message)
 {
 	signed int	x1 = 0;
-	signed int	x2 = global_screen[ID_CHANNEL_B].text_cols_vis_ - 1;
+	signed int	x2 = global_system->screen_[ID_CHANNEL_B]->text_cols_vis_ - 1;
 	signed int	y1 = 0;
 	signed int	y2 = 5;
 
 	// draw box and fill contents in prep for next demo description
-	Text_DrawBoxCoordsFancy(&global_screen[ID_CHANNEL_B], x1, y1, x2, y2, FG_COLOR_BLUE, BG_COLOR_DK_BLUE);
-	Text_FillBox(&global_screen[ID_CHANNEL_B], x1+1, y1+1, x2-1, y2-1, ' ', FG_COLOR_WHITE, BG_COLOR_DK_BLUE);
+	Text_DrawBoxCoordsFancy(global_system->screen_[ID_CHANNEL_B], x1, y1, x2, y2, FG_COLOR_BLUE, BG_COLOR_DK_BLUE);
+	Text_FillBox(global_system->screen_[ID_CHANNEL_B], x1+1, y1+1, x2-1, y2-1, ' ', FG_COLOR_WHITE, BG_COLOR_DK_BLUE);
 	
 	// wrap text into the message box, leaving one row at the bottom for "press any key"
-	Text_DrawStringInBox(&global_screen[ID_CHANNEL_B], x1+1, y1+1, x2-1, y2-1, the_message, FG_COLOR_WHITE, BG_COLOR_DK_BLUE, NULL);
+	Text_DrawStringInBox(global_system->screen_[ID_CHANNEL_B], x1+1, y1+1, x2-1, y2-1, the_message, FG_COLOR_WHITE, BG_COLOR_DK_BLUE, NULL);
 }
 
 
 void Demo_Graphics_FillMemory1(void)
 {
-	Graphics_FillMemory(&global_screen[ID_CHANNEL_B], 0x05);
+	Graphics_FillMemory(global_system->screen_[ID_CHANNEL_B]->bitmap_, 0x05);
 	ShowDescription("Graphics_FillMemory -> fill bitmap screen with value 0x05");	
 	WaitForUser();
 }
@@ -122,7 +124,7 @@ void Demo_Graphics_FillMemory1(void)
 
 void Demo_Graphics_FillMemory2(void)
 {
-	Graphics_FillMemory(&global_screen[ID_CHANNEL_B], 0xff);
+	Graphics_FillMemory(global_system->screen_[ID_CHANNEL_B]->bitmap_, 0xff);
 	ShowDescription("Graphics_FillMemory -> fill bitmap screen with value 0xff");	
 	WaitForUser();
 }
@@ -132,11 +134,11 @@ void Demo_Graphics_FillBox1(void)
 {
 	int x = 5;
 	int	y = 8*6;
-	int	width = global_screen[ID_CHANNEL_B].width_ - x - 30;
-	int height = global_screen[ID_CHANNEL_B].height_ - y - 100;
+	int	width = global_system->screen_[ID_CHANNEL_B]->width_ - x - 30;
+	int height = global_system->screen_[ID_CHANNEL_B]->height_ - y - 100;
 	
 	ShowDescription("Graphics_FillBox -> fill a square on screen with 0xff");	
-	Graphics_FillBox(&global_screen[ID_CHANNEL_B], x, y, width, height, 0xff);
+	Graphics_FillBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y, width, height, 0xff);
 	WaitForUser();
 }
 
@@ -145,11 +147,11 @@ void Demo_Graphics_FillBox2(void)
 {
 	int x = 500;
 	int	y = 8*6+100;
-	int	width = global_screen[ID_CHANNEL_B].width_ - x - 30;
-	int height = global_screen[ID_CHANNEL_B].height_ - y - 100;
+	int	width = global_system->screen_[ID_CHANNEL_B]->width_ - x - 30;
+	int height = global_system->screen_[ID_CHANNEL_B]->height_ - y - 100;
 	
 	ShowDescription("Graphics_FillBox -> fill a square on screen with 0x05");	
-	Graphics_FillBox(&global_screen[ID_CHANNEL_B], x, y, width, height, 0x05);
+	Graphics_FillBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y, width, height, 0x05);
 	WaitForUser();
 }
 
@@ -160,9 +162,9 @@ void Demo_Graphics_FillBox3(void)
 	int	y = 8*6;
 	
 	ShowDescription("Graphics_FillBox -> fill various squares with different color values");	
-	Graphics_FillBox(&global_screen[ID_CHANNEL_B], x + 30, y, 250, 100, 0x55);
-	Graphics_FillBox(&global_screen[ID_CHANNEL_B], x, y, 25, 25, 0xf5);
-	Graphics_FillBox(&global_screen[ID_CHANNEL_B], x, y + 50, 350, 200, 0x3f);
+	Graphics_FillBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x + 30, y, 250, 100, 0x55);
+	Graphics_FillBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y, 25, 25, 0xf5);
+	Graphics_FillBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y + 50, 350, 200, 0x3f);
 	WaitForUser();
 }
 
@@ -176,7 +178,7 @@ void Demo_Graphics_SetPixelAtXY(void)
  	
  	for (i = 0; i < 254; i++)
  	{
-	 	Graphics_SetPixelAtXY(&global_screen[ID_CHANNEL_B], *(junk_value++) + i, *(junk_value++) + i, i);
+	 	Graphics_SetPixelAtXY(global_system->screen_[ID_CHANNEL_B]->bitmap_, *(junk_value++) + i, *(junk_value++) + i, i);
  	}
 	WaitForUser();
 }
@@ -198,12 +200,12 @@ void Demo_Graphics_GetPixelAtXY(void)
  	
  	for (i = 0; i < 10; i++)
  	{
-		Graphics_FillBox(&global_screen[ID_CHANNEL_B], x, y, width, height, color);
-	 	detected_color = Graphics_GetPixelAtXY(&global_screen[ID_CHANNEL_B], x, y);
+		Graphics_FillBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y, width, height, color);
+	 	detected_color = Graphics_GetPixelAtXY(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y);
 	 	sprintf(temp_buff, "Set:%x", color);
-	 	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], (x+1)/8, text_y, (char*)temp_buff, FG_COLOR_YELLOW, BG_COLOR_BLACK);
+	 	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], (x+1)/8, text_y, (char*)temp_buff, FG_COLOR_YELLOW, BG_COLOR_BLACK);
 	 	sprintf(temp_buff, "Got:%x", detected_color);
-	 	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], (x+1)/8, text_y+1, (char*)temp_buff, FG_COLOR_YELLOW, BG_COLOR_BLACK);
+	 	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], (x+1)/8, text_y+1, (char*)temp_buff, FG_COLOR_YELLOW, BG_COLOR_BLACK);
 		color += 25;
 		x += width;
  	}
@@ -222,11 +224,11 @@ void Demo_Graphics_DrawHLine1(void)
 	x = 20;
 	y = 8*(10);
 	line_len = 200;
-	Graphics_DrawHLine(&global_screen[ID_CHANNEL_B], x, y, line_len, 0xff);
-	Graphics_DrawHLine(&global_screen[ID_CHANNEL_B], x, y + 20, line_len, 0xff);
-	Graphics_DrawHLine(&global_screen[ID_CHANNEL_B], x, y + 40, line_len, 0xff);
-	Graphics_DrawVLine(&global_screen[ID_CHANNEL_B], x + 100, y - 10, line_len, 0xff);
-	Graphics_DrawVLine(&global_screen[ID_CHANNEL_B], x + 150, y - 10, line_len + 50, 0xff);
+	Graphics_DrawHLine(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y, line_len, 0xff);
+	Graphics_DrawHLine(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y + 20, line_len, 0xff);
+	Graphics_DrawHLine(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y + 40, line_len, 0xff);
+	Graphics_DrawVLine(global_system->screen_[ID_CHANNEL_B]->bitmap_, x + 100, y - 10, line_len, 0xff);
+	Graphics_DrawVLine(global_system->screen_[ID_CHANNEL_B]->bitmap_, x + 150, y - 10, line_len + 50, 0xff);
 
 	WaitForUser();
 }
@@ -244,16 +246,16 @@ void Demo_Graphics_DrawLine(void)
 
 	for (i = 0; i < 256; i++)
 	{
-		Graphics_DrawLine(&global_screen[ID_CHANNEL_B], x1, y1, x2, y2, i);
+		Graphics_DrawLine(global_system->screen_[ID_CHANNEL_B]->bitmap_, x1, y1, x2, y2, i);
 		
 		x1 += 2;
 		x2 -= 2;
 	}
 
-// 	Graphics_DrawLine(&global_screen[ID_CHANNEL_B], x1, y1, x2, y2, 0xee);
-// 	Graphics_DrawLine(&global_screen[ID_CHANNEL_B], x2, y1, x1, y2, 0xce);
-// 	Graphics_DrawLine(&global_screen[ID_CHANNEL_B], x2, y1+20, x1, y2-20, 0x88);
-// 	Graphics_DrawLine(&global_screen[ID_CHANNEL_B], x2, y1+40, x1, y2-40, 0x55);
+// 	Graphics_DrawLine(global_system->screen_[ID_CHANNEL_B]->bitmap_, x1, y1, x2, y2, 0xee);
+// 	Graphics_DrawLine(global_system->screen_[ID_CHANNEL_B]->bitmap_, x2, y1, x1, y2, 0xce);
+// 	Graphics_DrawLine(global_system->screen_[ID_CHANNEL_B]->bitmap_, x2, y1+20, x1, y2-20, 0x88);
+// 	Graphics_DrawLine(global_system->screen_[ID_CHANNEL_B]->bitmap_, x2, y1+40, x1, y2-40, 0x55);
 	
 	WaitForUser();
 }
@@ -263,22 +265,22 @@ void Demo_Graphics_DrawBox(void)
 {
 	int x = 60;
 	int	y = 8*8;
-	int	width = global_screen[ID_CHANNEL_B].width_ - x - 60;
+	int	width = global_system->screen_[ID_CHANNEL_B]->width_ - x - 60;
 	int height = 300;
 
 	ShowDescription("Graphics_DrawBox -> Draw a filled or unfilled box. Supply start coordinates, width, height, color, and fill choice.");	
 
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x, y, width, height, 0xff, PARAM_DO_FILL);
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x, y, width, height, 0x55, PARAM_DO_NOT_FILL);
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x + 25, y + 25, width, height, 0x33, PARAM_DO_NOT_FILL);
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x + 50, y + 50, width, height, 0x77, PARAM_DO_NOT_FILL);
+	Graphics_DrawBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y, width, height, 0xff, PARAM_DO_FILL);
+	Graphics_DrawBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y, width, height, 0x55, PARAM_DO_NOT_FILL);
+	Graphics_DrawBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x + 25, y + 25, width, height, 0x33, PARAM_DO_NOT_FILL);
+	Graphics_DrawBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x + 50, y + 50, width, height, 0x77, PARAM_DO_NOT_FILL);
 
 	x = 0;
 	width = 10;
 	height = 10;
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x, y, width, height, 0xff, PARAM_DO_FILL);
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x, y, width, height, 0x55, PARAM_DO_NOT_FILL);
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], x+11, y, width, height, 0xff, PARAM_DO_FILL);
+	Graphics_DrawBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y, width, height, 0xff, PARAM_DO_FILL);
+	Graphics_DrawBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y, width, height, 0x55, PARAM_DO_NOT_FILL);
+	Graphics_DrawBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x+11, y, width, height, 0xff, PARAM_DO_FILL);
 	
 	WaitForUser();
 }
@@ -293,7 +295,7 @@ void Demo_Graphics_DrawBoxCoords(void)
 
 	ShowDescription("Graphics_DrawBoxCoords -> Draw a box using 4 coordinates.");	
 
-	Graphics_DrawBoxCoords(&global_screen[ID_CHANNEL_B], x1, y1, x2, y2, 0xff);
+	Graphics_DrawBoxCoords(global_system->screen_[ID_CHANNEL_B]->bitmap_, x1, y1, x2, y2, 0xff);
 	WaitForUser();
 }
 
@@ -314,9 +316,9 @@ void Demo_Graphics_DrawRoundBox(void)
 
 	for (i = 0; i <= 20; i++)
 	{
-		Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], x + color, y + color, width + i*2, height + i*2, i, color, PARAM_DO_NOT_FILL);
-		Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], xleft - color, y + color, width*2 + i*2, height*2 + i*2, 20 - i, color, PARAM_DO_FILL);
-		Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], xleft - color, y + color, width*2 + i*2, height*2 + i*2, 20 - i, line_color, PARAM_DO_NOT_FILL);
+		Graphics_DrawRoundBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x + color, y + color, width + i*2, height + i*2, i, color, PARAM_DO_NOT_FILL);
+		Graphics_DrawRoundBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, xleft - color, y + color, width*2 + i*2, height*2 + i*2, 20 - i, color, PARAM_DO_FILL);
+		Graphics_DrawRoundBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, xleft - color, y + color, width*2 + i*2, height*2 + i*2, 20 - i, line_color, PARAM_DO_NOT_FILL);
 		color += 7;
 	}
 
@@ -327,18 +329,18 @@ void Demo_Graphics_DrawRoundBox(void)
 	height = 16;
 	radius = 5;
 	color = 0xFF;
-// 	Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], x, y, width, height, radius, color);
-// 	Graphics_FillBox(&global_screen[ID_CHANNEL_B], x + radius, y + radius, width - radius*2, height-radius*2, color);
-// 	Graphics_Fill(&global_screen[ID_CHANNEL_B], x + radius, y + 1, color);
-// 	Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], x, y, width, height, radius, 0x01);
-// 	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], (x)/8-2, y/8-1, (char*)"Cancel", FG_COLOR_BLACK, BG_COLOR_BLACK);
+// 	Graphics_DrawRoundBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y, width, height, radius, color);
+// 	Graphics_FillBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x + radius, y + radius, width - radius*2, height-radius*2, color);
+// 	Graphics_Fill(global_system->screen_[ID_CHANNEL_B]->bitmap_, x + radius, y + 1, color);
+// 	Graphics_DrawRoundBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y, width, height, radius, 0x01);
+// 	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], (x)/8-2, y/8-1, (char*)"Cancel", FG_COLOR_BLACK, BG_COLOR_BLACK);
 // 	getchar();
 	
 	// faster fill by making rect fills and then just flood filling the corners
 	y = 250;
-	Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], x, y, width, height, radius, color, PARAM_DO_FILL);
-	Graphics_DrawRoundBox(&global_screen[ID_CHANNEL_B], x, y, width, height, radius, 0x01, PARAM_DO_NOT_FILL);
-	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], (x)/8-2, y/8-1, (char*)"Cancel", FG_COLOR_BLACK, BG_COLOR_BLACK);
+	Graphics_DrawRoundBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y, width, height, radius, color, PARAM_DO_FILL);
+	Graphics_DrawRoundBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, x, y, width, height, radius, 0x01, PARAM_DO_NOT_FILL);
+	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], (x)/8-2, y/8-1, (char*)"Cancel", FG_COLOR_BLACK, BG_COLOR_BLACK);
 
 
 	
@@ -357,13 +359,13 @@ void Demo_Graphics_DrawCircle(void)
 
 	for (i = 0; i < 256 && radius < 238; i += 3)
 	{
-		Graphics_DrawCircle(&global_screen[ID_CHANNEL_B], x1, y1, radius, i);
+		Graphics_DrawCircle(global_system->screen_[ID_CHANNEL_B]->bitmap_, x1, y1, radius, i);
 		
 		radius += 3;
 	}
 
-	Graphics_DrawCircle(&global_screen[ID_CHANNEL_B], 25, 25, 12, 0xff);
-	Graphics_DrawCircle(&global_screen[ID_CHANNEL_B], 25, 25, 15, 0xff);
+	Graphics_DrawCircle(global_system->screen_[ID_CHANNEL_B]->bitmap_, 25, 25, 12, 0xff);
+	Graphics_DrawCircle(global_system->screen_[ID_CHANNEL_B]->bitmap_, 25, 25, 15, 0xff);
 
 	WaitForUser();
 }
@@ -375,7 +377,7 @@ void Demo_Graphics_Blit1(void)
 	signed int		y1 = 200;
 	signed int		radius = 6;
 	signed int		box_height = 16;
-	signed int		box_width = global_screen[ID_CHANNEL_B].width_;
+	signed int		box_width = global_system->screen_[ID_CHANNEL_B]->width_;
 	signed int		color = 0x20;
 	signed int		i;
 	Bitmap			src_bm;
@@ -387,44 +389,44 @@ void Demo_Graphics_Blit1(void)
 	
 	for (i = 0; i < 30; i++)
 	{
-		Graphics_FillBox(&global_screen[ID_CHANNEL_B], 0, box_height * i, box_width, box_height, color);		
+		Graphics_FillBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, 0, box_height * i, box_width, box_height, color);		
 		color += 7;
 	}
 	
- 	Graphics_DrawCircle(&global_screen[ID_CHANNEL_B], 25, 25, 12, 0x88);
-	Graphics_DrawCircle(&global_screen[ID_CHANNEL_B], 25, 25, 15, 0xcc);
-	Graphics_DrawCircle(&global_screen[ID_CHANNEL_B], 25, 25, 20, 0xff);
+ 	Graphics_DrawCircle(global_system->screen_[ID_CHANNEL_B]->bitmap_, 25, 25, 12, 0x88);
+	Graphics_DrawCircle(global_system->screen_[ID_CHANNEL_B]->bitmap_, 25, 25, 15, 0xcc);
+	Graphics_DrawCircle(global_system->screen_[ID_CHANNEL_B]->bitmap_, 25, 25, 20, 0xff);
 
 	// copy bits of this screen to other parts of the Screen
 	src_bm.addr_ = (unsigned char*)VRAM_BUFFER_A;
-	src_bm.width_ = global_screen[ID_CHANNEL_B].width_;
-	src_bm.height_ = global_screen[ID_CHANNEL_B].height_;
+	src_bm.width_ = global_system->screen_[ID_CHANNEL_B]->width_;
+	src_bm.height_ = global_system->screen_[ID_CHANNEL_B]->height_;
 	dst_bm.addr_ = (unsigned char*)VRAM_BUFFER_A;
-	dst_bm.width_ = global_screen[ID_CHANNEL_B].width_;
-	dst_bm.height_ = global_screen[ID_CHANNEL_B].height_;
+	dst_bm.width_ = global_system->screen_[ID_CHANNEL_B]->width_;
+	dst_bm.height_ = global_system->screen_[ID_CHANNEL_B]->height_;
 
-	Graphics_BlitBitMap(&global_screen[ID_CHANNEL_B], &src_bm, 0, 0, &dst_bm, 100, 0, 50, 50);
-	Graphics_BlitBitMap(&global_screen[ID_CHANNEL_B], &src_bm, 0, 0, &dst_bm, 100, 100, 50, 50);
-	Graphics_BlitBitMap(&global_screen[ID_CHANNEL_B], &src_bm, 0, 0, &dst_bm, 100, 200, 50, 50);
-	Graphics_BlitBitMap(&global_screen[ID_CHANNEL_B], &src_bm, 0, 0, &dst_bm, 100, 300, 50, 50);
-	Graphics_BlitBitMap(&global_screen[ID_CHANNEL_B], &src_bm, 0, 0, &dst_bm, 200, 100, 50, 50);
-	Graphics_BlitBitMap(&global_screen[ID_CHANNEL_B], &src_bm, 0, 0, &dst_bm, 200, 200, 50, 50);
-	Graphics_BlitBitMap(&global_screen[ID_CHANNEL_B], &src_bm, 0, 0, &dst_bm, 200, 300, 50, 50);
-	Graphics_BlitBitMap(&global_screen[ID_CHANNEL_B], &src_bm, 0, 0, &dst_bm, 300, 100, 50, 50);
-	Graphics_BlitBitMap(&global_screen[ID_CHANNEL_B], &src_bm, 0, 0, &dst_bm, 300, 200, 50, 50);
-	Graphics_BlitBitMap(&global_screen[ID_CHANNEL_B], &src_bm, 0, 0, &dst_bm, 300, 300, 50, 50);
-// 	Graphics_BlitBitMap(&global_screen[ID_CHANNEL_B], &src_bm, x1 - 100, y1 - 100, &dst_bm, 0, 0, 100, 100);
-// 	Graphics_BlitBitMap(&global_screen[ID_CHANNEL_B], &src_bm, x1 - 100, y1 - 100, &dst_bm, 400, 300, 100, 100);
+	Graphics_BlitBitMap(&src_bm, 0, 0, &dst_bm, 100, 0, 50, 50);
+	Graphics_BlitBitMap(&src_bm, 0, 0, &dst_bm, 100, 100, 50, 50);
+	Graphics_BlitBitMap(&src_bm, 0, 0, &dst_bm, 100, 200, 50, 50);
+	Graphics_BlitBitMap(&src_bm, 0, 0, &dst_bm, 100, 300, 50, 50);
+	Graphics_BlitBitMap(&src_bm, 0, 0, &dst_bm, 200, 100, 50, 50);
+	Graphics_BlitBitMap(&src_bm, 0, 0, &dst_bm, 200, 200, 50, 50);
+	Graphics_BlitBitMap(&src_bm, 0, 0, &dst_bm, 200, 300, 50, 50);
+	Graphics_BlitBitMap(&src_bm, 0, 0, &dst_bm, 300, 100, 50, 50);
+	Graphics_BlitBitMap(&src_bm, 0, 0, &dst_bm, 300, 200, 50, 50);
+	Graphics_BlitBitMap(&src_bm, 0, 0, &dst_bm, 300, 300, 50, 50);
+// 	Graphics_BlitBitMap(&src_bm, x1 - 100, y1 - 100, &dst_bm, 0, 0, 100, 100);
+// 	Graphics_BlitBitMap(&src_bm, x1 - 100, y1 - 100, &dst_bm, 400, 300, 100, 100);
 	
 	// do a 'dragon' effect
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], 550, 350, 20, 20, 0xff, PARAM_DO_FILL);
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], 550, 350, 30, 30, 0xcc, PARAM_DO_FILL);
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], 550, 350, 40, 40, 0xbb, PARAM_DO_FILL);
-	Graphics_DrawBox(&global_screen[ID_CHANNEL_B], 550, 350, 50, 50, 0x99, PARAM_DO_FILL);
+	Graphics_DrawBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, 550, 350, 20, 20, 0xff, PARAM_DO_FILL);
+	Graphics_DrawBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, 550, 350, 30, 30, 0xcc, PARAM_DO_FILL);
+	Graphics_DrawBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, 550, 350, 40, 40, 0xbb, PARAM_DO_FILL);
+	Graphics_DrawBox(global_system->screen_[ID_CHANNEL_B]->bitmap_, 550, 350, 50, 50, 0x99, PARAM_DO_FILL);
 	
 	for (i = 0; i < 25; i++)
 	{
-		Graphics_BlitBitMap(&global_screen[ID_CHANNEL_B], &src_bm, 550, 350, &dst_bm, i*10, 350 - i*10, 50, 50);
+		Graphics_BlitBitMap(&src_bm, 550, 350, &dst_bm, i*10, 350 - i*10, 50, 50);
 	}
 	
 	WaitForUser();
@@ -441,22 +443,22 @@ void Demo_Graphics_ScreenResolution1(void)
 	char*			the_message = msg_buffer;
 	int				y = 7;
 	
-	Text_SetVideoMode(&global_screen[ID_CHANNEL_B], RES_800X600);
-	ShowDescription("Text_SetVideoMode -> (RES_800X600) Changes resolution to 800x600 if available for this screen/channel.");	
+	Sys_SetVideoMode(global_system->screen_[ID_CHANNEL_B], RES_800X600);
+	ShowDescription("Sys_SetVideoMode -> (RES_800X600) Changes resolution to 800x600 if available for this screen/channel.");	
 
 	sprintf(the_message, "Requested 800x600. Actual: %i x %i, %i x %i text, %i x %i visible text", 
-		global_screen[ID_CHANNEL_B].width_, 
-		global_screen[ID_CHANNEL_B].height_, 
-		global_screen[ID_CHANNEL_B].text_mem_cols_, 
-		global_screen[ID_CHANNEL_B].text_mem_rows_, 
-		global_screen[ID_CHANNEL_B].text_cols_vis_, 
-		global_screen[ID_CHANNEL_B].text_rows_vis_
+		global_system->screen_[ID_CHANNEL_B]->width_, 
+		global_system->screen_[ID_CHANNEL_B]->height_, 
+		global_system->screen_[ID_CHANNEL_B]->text_mem_cols_, 
+		global_system->screen_[ID_CHANNEL_B]->text_mem_rows_, 
+		global_system->screen_[ID_CHANNEL_B]->text_cols_vis_, 
+		global_system->screen_[ID_CHANNEL_B]->text_rows_vis_
 		);
-	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], 0, y, the_message, FG_COLOR_BLACK, BG_COLOR_GREEN);
-	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], 0, y + 1, (char*)"0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789", FG_COLOR_DK_BLUE, BG_COLOR_YELLOW);
-	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], 0, y + 2, (char*)"<-START OF LINE", FG_COLOR_BLACK, BG_COLOR_GREEN);
-	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], 0, 70, (char*)"ROW70", FG_COLOR_BLACK, BG_COLOR_GREEN);
-	Text_ShowFontChars(&global_screen[ID_CHANNEL_B], y + 3);
+	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], 0, y, the_message, FG_COLOR_BLACK, BG_COLOR_GREEN);
+	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], 0, y + 1, (char*)"0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789", FG_COLOR_DK_BLUE, BG_COLOR_YELLOW);
+	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], 0, y + 2, (char*)"<-START OF LINE", FG_COLOR_BLACK, BG_COLOR_GREEN);
+	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], 0, 70, (char*)"ROW70", FG_COLOR_BLACK, BG_COLOR_GREEN);
+	Text_ShowFontChars(global_system->screen_[ID_CHANNEL_B], y + 3);
 
 	WaitForUser();
 }
@@ -468,22 +470,22 @@ void Demo_Graphics_ScreenResolution2(void)
 	char*			the_message = msg_buffer;
 	int				y = 7;
 	
-	Text_SetVideoMode(&global_screen[ID_CHANNEL_B], RES_640X480);
-	ShowDescription("Text_SetVideoMode -> (RES_640X480) Changes resolution to 640x480 if available for this screen/channel.");	
+	Sys_SetVideoMode(global_system->screen_[ID_CHANNEL_B], RES_640X480);
+	ShowDescription("Sys_SetVideoMode -> (RES_640X480) Changes resolution to 640x480 if available for this screen/channel.");	
 
 	sprintf(the_message, "Requested 640x480. Actual: %i x %i, %i x %i text, %i x %i visible text", 
-		global_screen[ID_CHANNEL_B].width_, 
-		global_screen[ID_CHANNEL_B].height_, 
-		global_screen[ID_CHANNEL_B].text_mem_cols_, 
-		global_screen[ID_CHANNEL_B].text_mem_rows_, 
-		global_screen[ID_CHANNEL_B].text_cols_vis_, 
-		global_screen[ID_CHANNEL_B].text_rows_vis_
+		global_system->screen_[ID_CHANNEL_B]->width_, 
+		global_system->screen_[ID_CHANNEL_B]->height_, 
+		global_system->screen_[ID_CHANNEL_B]->text_mem_cols_, 
+		global_system->screen_[ID_CHANNEL_B]->text_mem_rows_, 
+		global_system->screen_[ID_CHANNEL_B]->text_cols_vis_, 
+		global_system->screen_[ID_CHANNEL_B]->text_rows_vis_
 		);
-	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], 0, y, the_message, FG_COLOR_BLACK, BG_COLOR_GREEN);
-	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], 0, y + 1, (char*)"01234567890123456789012345678901234567890123456789012345678901234567890123456789", FG_COLOR_DK_BLUE, BG_COLOR_YELLOW);
-	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], 0, y + 2, (char*)"<-START OF LINE", FG_COLOR_BLACK, BG_COLOR_GREEN);
-	Text_DrawStringAtXY(&global_screen[ID_CHANNEL_B], 0, 55, (char*)"ROW55", FG_COLOR_BLACK, BG_COLOR_GREEN);
-	Text_ShowFontChars(&global_screen[ID_CHANNEL_B], y + 3);
+	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], 0, y, the_message, FG_COLOR_BLACK, BG_COLOR_GREEN);
+	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], 0, y + 1, (char*)"01234567890123456789012345678901234567890123456789012345678901234567890123456789", FG_COLOR_DK_BLUE, BG_COLOR_YELLOW);
+	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], 0, y + 2, (char*)"<-START OF LINE", FG_COLOR_BLACK, BG_COLOR_GREEN);
+	Text_DrawStringAtXY(global_system->screen_[ID_CHANNEL_B], 0, 55, (char*)"ROW55", FG_COLOR_BLACK, BG_COLOR_GREEN);
+	Text_ShowFontChars(global_system->screen_[ID_CHANNEL_B], y + 3);
 
 	WaitForUser();
 }
@@ -493,8 +495,8 @@ void Demo_Graphics_ScreenResolution2(void)
 
 void RunDemo(void)
 {
-// 	Text_FillCharMem(&global_screen[ID_CHANNEL_B], ' ');
-// 	Text_FillAttrMem(&global_screen[ID_CHANNEL_B], 160);
+// 	Text_FillCharMem(global_system->screen_[ID_CHANNEL_B], ' ');
+// 	Text_FillAttrMem(global_system->screen_[ID_CHANNEL_B], 160);
 
 	ShowDescription("Welcome to the A2560 Graphics Library Demo!");	
 	WaitForUser();
@@ -538,24 +540,14 @@ void RunDemo(void)
 
 int main(int argc, char* argv[])
 {
-	
-	global_screen[ID_CHANNEL_A].id_ = ID_CHANNEL_A;
-	global_screen[ID_CHANNEL_B].id_ = ID_CHANNEL_B;
-
-	if (Text_AutoConfigureScreen(&global_screen[ID_CHANNEL_A]) == false)
+	if ( Sys_InitSystem() == false)
 	{
-		DEBUG_OUT(("%s %d: Auto configure failed for screen A", __func__, __LINE__));
+		DEBUG_OUT(("%s %d: Couldn't initialize the system", __func__, __LINE__));
 		exit(0);
 	}
 	
-	if (Text_AutoConfigureScreen(&global_screen[ID_CHANNEL_B]) == false)
-	{
-		DEBUG_OUT(("%s %d: Auto configure failed for screen B", __func__, __LINE__));
-		exit(0);
-	}
-	
-	//Graphics_SetModeGraphics(&global_screen[ID_CHANNEL_B]);
-	Graphics_SetModeText(&global_screen[ID_CHANNEL_B], true);
+	//Sys_SetModeGraphics(global_system);
+	Sys_SetModeText(global_system, true);
 	
 	RunDemo();
 	

@@ -86,13 +86,14 @@
 
 struct Bitmap
 {
-	unsigned char*	addr_;		//!< address of the start of the bitmap, within the machine's global address space. This is not the VICKY's local address for this bitmap. This address MUST be within the VRAM, however, it cannot be in non-VRAM memory space.
 	signed int		width_;		//!< width of the bitmap in pixels
 	signed int		height_;	//!< height of the bitmap in pixels
 	signed int		x_;			//!< H position within this bitmap, of the "pen", for functions that draw from that point
 	signed int		y_;			//!< V position within this bitmap, of the "pen", for functions that draw from that point
 	uint8_t			color_;		//!< color value to use for next "pen" based operation in this bitmap
+	uint8_t			reserved_;	//!< future use
 	Font*			font_;		//!< the currently selected font. All text drawing activities will use this font face.
+	unsigned char*	addr_;		//!< address of the start of the bitmap, within the machine's global address space. This is not the VICKY's local address for this bitmap. This address MUST be within the VRAM, however, it cannot be in non-VRAM memory space.
 };
 
 
@@ -106,7 +107,17 @@ struct Bitmap
 /*****************************************************************************/
 
 
-// ** NOTE: there is no destructor or constructor for this library, as it does not track any allocated memory.
+// **** CONSTRUCTOR AND DESTRUCTOR *****
+
+// constructor
+
+//! Create a new bitmap object by allocating space for the bitmap struct in regular memory, and for the graphics, in VRAM
+//! @param	Font: optional font object to associate with the Bitmap. 
+Bitmap* Bitmap_New(signed int width, signed int height, Font* the_font);
+
+// destructor
+// frees all allocated memory associated with the passed object, and the object itself
+boolean Bitmap_Destroy(Bitmap** the_bitmap);
 
 
 // **** Block copy functions ****
@@ -118,20 +129,27 @@ struct Bitmap
 //! @param src_x, src_y: the upper left coordinate within the source bitmap, for the rectangle you want to copy. May be negative.
 //! @param dst_x, dst_y: the location within the destination bitmap to copy pixels to. May be negative.
 //! @param width, height: the scope of the copy, in pixels.
-boolean Graphics_BlitBitMap(Screen* the_screen, Bitmap* src_bm, int src_x, int src_y, Bitmap* dst_bm, int dst_x, int dst_y, int width, int height);
+boolean Graphics_BlitBitMap(Bitmap* src_bm, int src_x, int src_y, Bitmap* dst_bm, int dst_x, int dst_y, int width, int height);
 
 
 // **** Block fill functions ****
 
 // Fill graphics memory with specified value
 // calling function must validate the screen ID before passing!
+//! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_FillMemory(Screen* the_screen, unsigned char the_color);
+boolean Graphics_FillMemory(Bitmap* the_bitmap, unsigned char the_color);
 
-// Fill pixel values for a specific box area
-// calling function must validate screen id, coords!
+//! Fill pixel values for the passed Rectangle object, using the specified LUT value
+//! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_FillBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, unsigned char the_color);
+boolean Graphics_FillBoxRect(Bitmap* the_bitmap, Rectangle* the_coords, unsigned char the_color);
+
+// Fill pixel values for a specific box area, using the specified LUT value
+// calling function must validate screen id, coords!
+//! @param	the_color: a 1-byte index to the current LUT
+//! @return	returns false on any error/invalid input.
+boolean Graphics_FillBox(Bitmap* the_bitmap, signed int x, signed int y, signed int width, signed int height, unsigned char the_color);
 
 
 
@@ -199,7 +217,7 @@ unsigned char* Bitmap_GetCurrentMemLoc(Bitmap* the_bitmap);
 //! Set a char at a specified x, y coord
 //! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_SetPixelAtXY(Screen* the_screen, signed int x, signed int y, unsigned char the_color);
+boolean Graphics_SetPixelAtXY(Bitmap* the_bitmap, signed int x, signed int y, unsigned char the_color);
 
 
 
@@ -208,7 +226,7 @@ boolean Graphics_SetPixelAtXY(Screen* the_screen, signed int x, signed int y, un
 
 //! Get the char at a specified x, y coord
 //! @return	returns a character code
-unsigned char Graphics_GetPixelAtXY(Screen* the_screen, signed int x, signed int y);
+unsigned char Graphics_GetPixelAtXY(Bitmap* the_bitmap, signed int x, signed int y);
 
 
 
@@ -218,22 +236,27 @@ unsigned char Graphics_GetPixelAtXY(Screen* the_screen, signed int x, signed int
 //! Draws a line between 2 passed coordinates.
 //! Use for any line that is not perfectly vertical or perfectly horizontal
 //! Based on http://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C. Used in C128 Lich King. 
-boolean Graphics_DrawLine(Screen* the_screen, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_color);
+boolean Graphics_DrawLine(Bitmap* the_bitmap, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_color);
 
 //! Draws a horizontal line from specified coords, for n pixels, using the specified pixel value
 //! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawHLine(Screen* the_screen, signed int x, signed int y, signed int the_line_len, unsigned char the_color);
+boolean Graphics_DrawHLine(Bitmap* the_bitmap, signed int x, signed int y, signed int the_line_len, unsigned char the_color);
 
 //! Draws a vertical line from specified coords, for n pixels
 //! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawVLine(Screen* the_screen, signed int x, signed int y, signed int the_line_len, unsigned char the_color);
+boolean Graphics_DrawVLine(Bitmap* the_bitmap, signed int x, signed int y, signed int the_line_len, unsigned char the_color);
+
+//! Draws a rectangle based on the passed Rectangle object, using the specified LUT value
+//! @param	the_color: a 1-byte index to the current LUT
+//! @return	returns false on any error/invalid input.
+boolean Graphics_DrawBoxRect(Bitmap* the_bitmap, Rectangle* the_coords, unsigned char the_color);
 
 //! Draws a rectangle based on 2 sets of coords, using the specified LUT value
 //! @param	the_color: a 1-byte index to the current LUT
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawBoxCoords(Screen* the_screen, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_color);
+boolean Graphics_DrawBoxCoords(Bitmap* the_bitmap, signed int x1, signed int y1, signed int x2, signed int y2, unsigned char the_color);
 
 //! Draws a rectangle based on start coords and width/height, and optionally fills the rectangle.
 //! @param	width: width, in pixels, of the rectangle to be drawn
@@ -241,7 +264,7 @@ boolean Graphics_DrawBoxCoords(Screen* the_screen, signed int x1, signed int y1,
 //! @param	the_color: a 1-byte index to the current LUT
 //! @param	do_fill: If true, the box will be filled with the provided color. If false, the box will only draw the outline.
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, unsigned char the_color, boolean do_fill);
+boolean Graphics_DrawBox(Bitmap* the_bitmap, signed int x, signed int y, signed int width, signed int height, unsigned char the_color, boolean do_fill);
 
 //! Draws a rounded rectangle with the specified size and radius, and optionally fills the rectangle.
 //! @param	width: width, in pixels, of the rectangle to be drawn
@@ -250,63 +273,15 @@ boolean Graphics_DrawBox(Screen* the_screen, signed int x, signed int y, signed 
 //! @param	the_color: a 1-byte index to the current color LUT
 //! @param	do_fill: If true, the box will be filled with the provided color. If false, the box will only draw the outline.
 //! @return	returns false on any error/invalid input.
-boolean Graphics_DrawRoundBox(Screen* the_screen, signed int x, signed int y, signed int width, signed int height, signed int radius, unsigned char the_color, boolean do_fill);
+boolean Graphics_DrawRoundBox(Bitmap* the_bitmap, signed int x, signed int y, signed int width, signed int height, signed int radius, unsigned char the_color, boolean do_fill);
 
 //! Draw a circle
 //! Based on http://rosettacode.org/wiki/Bitmap/Midpoint_circle_algorithm#C
-boolean Graphics_DrawCircle(Screen* the_screen, signed int x1, signed int y1, signed int radius, unsigned char the_color);
+boolean Graphics_DrawCircle(Bitmap* the_bitmap, signed int x1, signed int y1, signed int radius, unsigned char the_color);
 
 
 
 
-// **** Screen mode/resolution/size functions *****
-
-
-//! Switch machine into graphics mode
-boolean Graphics_SetModeGraphics(Screen* the_screen);
-
-//! Switch machine into text mode
-//! @param as_overlay: If true, sets text overlay mode (text over graphics). If false, sets full text mode (no graphics);
-boolean Graphics_SetModeText(Screen* the_screen, boolean as_overlay);
-
-
-
-//
-// Discord, 3022/03/10
-//
-// PJW
-// Generally speaking (the order does not really matter on this):
-// 1. Set the mode bits in the master control register (GRAPHICS + BITMAP), as well as the resolution.
-// 2. Load the color table for the bitmap into one of the graphics LUTs (start at $B4:2000 on the A2560U, $FEC8:2000 on the A2560K)
-// 3. Load the bitmap pixel data into video RAM (starts at $C0:0000 on the A2560U, $0080:0000 on the A2560K)
-// 4. Set the enable bit and LUT # in the bitmap control register for the layer you want
-// 5. Set the address of the pixel data in video RAM in the VRAM address pointer for the layer you want. This must be set relative to the beginning of VRAM, so if you're using the A2560U and the pixel data starts at $C2:0000, you'd store $02:0000 in the address register.
-// Paul Scott Robson — Today at 12:45 PM
-// TextInitialise:
-//         clr.l     d0
-//         lea     vicky3,a0                     ; start register writes
-//         move.l     #$0000000C,(a0)             ; graphics mode & bitmap on.
-//         move.l     d0,$4(a0)                     ; zero border size/scroll/colour
-//         move.l     d0,$8(a0)                     ; clear border colour
-//         move.l     d0,$C(a0)
-//         move.l     d0,$10(a0)                     ; cursor off
-//         move.l     d0,$14(a0)                     ; no line interrupts
-//         move.l     d0,$18(a0)
-// 
-//         move.l     #$00000001,$100(a0)         ; LUT 0, BMP 1 on
-//         move.l     d0,$104(a0)                 ; BMP 1 address
-//         move.l     d0,$108(a0)                    ; BMP 2 off
-// 
-//         move.l     #$0000FF00,$2004(a0)         ; colour 1 red
-//         move.l     #$00FF00FF,$2008(a0)         ; colour 2 green
-//         move.l     #$00FFFFFF,$200C(a0)         ; colour 3 yellow
-//         move.l     #$FF0000FF,$2010(a0)         ; colour 4 blue
-//         move.l     #$FF00FFFF,$2014(a0)         ; colour 5 magenta
-//         move.l     #$FFFF00FF,$2018(a0)         ; colour 6 cyan
-//         move.l     #$FFFFFFFF,$201C(a0)         ; colour 7 white
-// 
-//         rts
-// Bit Q&D but I think it's right
 
 #endif /* LIB_GRAPHICS_H_ */
 
